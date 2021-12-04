@@ -11,8 +11,28 @@ import mappingStore
 
 app = Flask(__name__)
 
-g_shortener = shortener.Shortener()
-g_mapping_store = mappingStore.MappingStore()
+g_shortener = None
+g_mapping_store = None
+
+
+def init_app():
+    global g_shortener
+    global g_mapping_store
+    g_shortener = shortener.Shortener()
+    g_mapping_store = mappingStore.MappingStore()
+
+    g_shortener.mapping_store = g_mapping_store
+
+
+def clean_db():
+    global g_mapping_store
+    g_mapping_store.clean_db()
+
+
+def set_shortener_range(start=1, end=-1):
+    global g_shortener
+    g_shortener.counter = start
+    g_shortener.counter_upper_limit = end
 
 
 @app.route('/<hashed_id>')
@@ -45,7 +65,8 @@ def shorten():
         return jsonify({response_key: g_shortener.url_prefix + short_url}), 200
 
 
-def run_shortener(ip='0.0.0.0', port=5050, first_N= 7, url_prefix=None, token_url=None, count_range=None, mapping_store_file=None, logger_file_path=None):
+def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, url_prefix=None, token_url=None, count_start=1, count_end=-1,
+                    mapping_store_file=None, logger_file_path=None):
     # if logger_file_path exist it will log to file, otherwise it will log to stdout and stderr
     if logger_file_path is not None:
         logging.basicConfig(filename=logger_file_path + "_" + datetime.datetime.now().strftime("%Y%m%d%H%M%S"),
@@ -71,19 +92,16 @@ def run_shortener(ip='0.0.0.0', port=5050, first_N= 7, url_prefix=None, token_ur
     g_shortener.first_n_char = first_N
     if token_url is not None:
         g_shortener.token_url = token_url
-    if count_range is not None:
-        g_shortener.counter = int(count_range.split('-')[0])
-        g_shortener.counter_upper_limit = int(count_range.split('-')[1])
+
+    g_shortener.counter = count_start
+    g_shortener.counter_upper_limit = count_end
 
     # initialize the flask
     app.logger.info("Start the service")
 
     g_mapping_store.logger = app.logger
     g_mapping_store.store_path = mapping_store_file
-    g_shortener.mapping_store = g_mapping_store
     g_mapping_store.init_db()
-
-    app.run(host=ip, port=port)
 
 
 if __name__ == "__main__":
@@ -108,7 +126,14 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    run_shortener(args.ip, args.port, args.first_N, args.url_prefix, args.token_url, args.count_range, args.mapping_store_file, args.logger_file_path)
-
-
-
+    init_app()
+    setup_shortener(ip=args.ip,
+                    port=args.port,
+                    first_N=args.first_N,
+                    url_prefix=args.url_prefix,
+                    token_url=args.token_url,
+                    count_start=1 if args.count_range is None else args.count_range.split("-")[0],
+                    count_end=-1 if args.count_range is None else args.count_range.split("-")[1],
+                    mapping_store_file=args.mapping_store_file,
+                    logger_file_path=args.logger_file_path)
+    app.run(host=args.ip, port=args.port)
