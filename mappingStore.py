@@ -1,4 +1,5 @@
 import sqlite3
+from sqlite3 import Error
 
 class MappingStore:
     def __init__(self):
@@ -16,12 +17,15 @@ class MappingStore:
 
     def init_db(self):
         db, cursor = self.get_db()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS mapping (
-            [id] INTEGER NOT NULL,
-            [long_url] text NOT NULL,
-            [short_url_hash] text NOT NULL,
-            PRIMARY KEY(id, long_url, short_url_hash)
-            )''')
+        try:
+            cursor.execute('''CREATE TABLE IF NOT EXISTS mapping (
+                [id] INTEGER NOT NULL,
+                [long_url] text NOT NULL,
+                [short_url_hash] text NOT NULL,
+                PRIMARY KEY(id, long_url, short_url_hash)
+                )''')
+        except Error as e:
+            self.logger.debug(e)
         db.commit()
         self.close_db()
 
