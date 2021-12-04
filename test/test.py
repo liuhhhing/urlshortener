@@ -7,7 +7,7 @@ from runner import app
 from runner import init_app
 from runner import clean_db
 import hashlib
-#from runner import set_shortener_range
+# from runner import set_shortener_range
 from flask import jsonify
 import json
 from flask import Flask
@@ -124,7 +124,6 @@ class MyTestCase(unittest.TestCase):
         rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.music6.com'}])
         self.assertEqual(rv.data, b'{"Error":"Counter All used up"}\n')
 
-
         rv = app.test_client().get('/6b86b27')
         self.assertEqual(rv.location, 'http://www.music1.com')
 
@@ -155,26 +154,69 @@ class MyTestCase(unittest.TestCase):
 
     def test_range_clash(self):
         init_app()
-        setup_shortener(url_prefix='http://mydomain.com/', port=5050, mapping_store_file='test_clash.sqlite',
-                        count_start=30, count_end=40)
+        setup_shortener(url_prefix='http://mydomain.com/', port=5050, count_start=1, count_end=-1)
+        clean_db()
 
-        for x in range(30, 41):
-            url = 'http://www.notgood{0}.com'.format(x)
+        def thread_func():
+            app.run()
+
+        threading.Thread(target=thread_func)
+
+        for x in range(1, 50):
+            url = 'http://www.music{0}.com'.format(x)
             rv = app.test_client().post('/shorten', headers={'Accept': '*/*'},
                                         json=[{'LongURL': url}])
-            self.assertEqual(rv.data, b'{"Error":"Counter All used up"}\n')
+            hash_value = hashlib.sha256(str(x).encode()).hexdigest()[:7]
+            shortened = """http://mydomain.com:5050/{0}""".format(hash_value)
+            shortened = '{"ShortenedURL":"' + shortened + '"}\n'
+            self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
+        for x in range(1, 50):
+            hash_value = hashlib.sha256(str(x).encode()).hexdigest()[:7]
+            rv = app.test_client().get('/' + hash_value)
+            long_url = 'http://www.music{0}.com'.format(x)
+            self.assertEqual(rv.location, long_url)
 
-    def test_range_clash(self):
         init_app()
-        setup_shortener(url_prefix='http://mydomain.com/', port=5050, mapping_store_file='test_clash.sqlite',
-                        count_start=30, count_end=40)
+        setup_shortener(url_prefix='http://mydomain.com/', port=5050, count_start=40, count_end=45)
 
-        for x in range(30, 41):
-            url = 'http://www.notgood{0}.com'.format(x)
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'},
+                                    json=[{'LongURL': 'http://www.shouldbebad.com'}])
+        self.assertEqual(rv.data, b'{"Error":"Counter All used up"}\n')
+
+    def test_range_out_of_clash(self):
+        init_app()
+        setup_shortener(url_prefix='http://mydomain.com/', port=5050, count_start=1, count_end=-1)
+        clean_db()
+
+        def thread_func():
+            app.run()
+
+        threading.Thread(target=thread_func)
+
+        for x in range(1, 50):
+            url = 'http://www.music{0}.com'.format(x)
             rv = app.test_client().post('/shorten', headers={'Accept': '*/*'},
                                         json=[{'LongURL': url}])
-            self.assertEqual(rv.data, b'{"Error":"Counter All used up"}\n')
+            hash_value = hashlib.sha256(str(x).encode()).hexdigest()[:7]
+            shortened = """http://mydomain.com:5050/{0}""".format(hash_value)
+            shortened = '{"ShortenedURL":"' + shortened + '"}\n'
+            self.assertEqual(rv.data, shortened.encode('UTF-8'))
+
+        for x in range(1, 50):
+            hash_value = hashlib.sha256(str(x).encode()).hexdigest()[:7]
+            rv = app.test_client().get('/' + hash_value)
+            long_url = 'http://www.music{0}.com'.format(x)
+            self.assertEqual(rv.location, long_url)
+
+        init_app()
+        setup_shortener(url_prefix='http://mydomain.com/', port=5050, count_start=55, count_end=-1)
+
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.shouldbegood.com'}])
+        hash_value = hashlib.sha256(str(55).encode()).hexdigest()[:7]
+        shortened = """http://mydomain.com:5050/{0}""".format(hash_value)
+        shortened = '{"ShortenedURL":"' + shortened + '"}\n'
+        self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
 
     def test_stress(self):
@@ -187,7 +229,7 @@ class MyTestCase(unittest.TestCase):
 
         threading.Thread(target=thread_func)
 
-        for x in range(1,100):
+        for x in range(1, 100):
             url = 'http://www.music{0}.com'.format(x)
             rv = app.test_client().post('/shorten', headers={'Accept': '*/*'},
                                         json=[{'LongURL': url}])
@@ -196,13 +238,11 @@ class MyTestCase(unittest.TestCase):
             shortened = '{"ShortenedURL":"' + shortened + '"}\n'
             self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
-        for x in range(1,100):
+        for x in range(1, 100):
             hash_value = hashlib.sha256(str(x).encode()).hexdigest()[:7]
             rv = app.test_client().get('/' + hash_value)
             long_url = 'http://www.music{0}.com'.format(x)
             self.assertEqual(rv.location, long_url)
-
-
 
 
 if __name__ == '__main__':
