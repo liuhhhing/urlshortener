@@ -9,6 +9,7 @@ class Shortener:
         self.token_url = ''
         self.response_url_prefix = ''
         self.mapping_store = None
+        self.secret_key = '+goodwishtoHongKong'
         # self.file_path = ''
         # self.mapping = {} # this is a dictionary in memory
 
@@ -17,7 +18,7 @@ class Shortener:
 
     def generate_hash(self):
 
-        hash_operation = hashlib.sha256(str(self.counter).encode()).hexdigest()[:self.first_n_char]
+        hash_operation = hashlib.sha256((self.secret_key + str(self.counter)).encode()).hexdigest()[:self.first_n_char]
         logging.debug('{{Counter, Hash}} = {{{0},{1}}}'.format(self.counter, hash_operation))
         while self.mapping_store.is_hashed_url_exist(hash_operation):  # loop until no cash
             # it should happen very rare
@@ -25,7 +26,7 @@ class Shortener:
             self.counter = self.counter + 1
             if not self.still_can_hash():
                 break
-            hash_operation = hashlib.sha256(str(self.counter).encode()).hexdigest()[:self.first_n_char]
+            hash_operation = hashlib.sha256((self.secret_key + str(self.counter)).encode()).hexdigest()[:self.first_n_char]
 
         if self.still_can_hash() == False:
             logging.debug('{{Counter, Hash}} = {{{0},{1}}} limit reached'.format(self.counter, hash_operation))
