@@ -203,7 +203,7 @@ The mappingStore basically provide the interface to save and load the mapping da
 ## Future Work
 There is a list of TODO for this work:
 
-1. Support retreiving the range of free-to-use id from a service so it can be run in microservice manner
+1. Support retreiving the range of free-to-use id from a service so it can be run in multiple manner
 2. Check if the incoming LongURL request is a valid URL (at least the format is correct), rather than allowing them put a random text
 3. Support HTTPS
 4. Support Authentication optionally
