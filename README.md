@@ -156,9 +156,9 @@ Another reason for using a range of id is that when we want to run the program a
 
 However, this needs another service to provide the range of id that is being "free-to-use" or "being-used" and get retrieved by the program (this can be specified by the argument `--tokenUrl`. ***Notice it is in to-be-implemented stage and not supported***.
 
-The idea of hasing the id is simplified. For security reason we added a static text as the prefix to the id before hashing. The static text is stored in the shortener.py.
+The idea of hasing the id is simplified. For security reason we added a static text, which is stored in the shortener.py, as the prefix to the id before hashing.
 
-For example, instead of hashing the "1", we hash the text "secretkey_1". This is important because URL shortener is not just to shorten the long URL, but also to some extent hide the Long URL information. Let's say when you try to share a photo from a private cloud to only some friends, you don't want hacker to retreive the Long URL by issuing a `HTTP GET /{hash_value}` with the hash_value from hashed "1", "2", "3" ... etc easily. Adding a secret prefix can add security to certain extent.
+For example, instead of hashing the "1", we hash the text "secretkey_1". This is important because URL shortener is not just to shorten the long URL, but also to some extent hide the Long URL information. Let's say when you try to share a photo from a private cloud to only some friends, you don't want hacker to retreive the Long URL by issuing a `HTTP GET /{hash_value}` with the hash_value from hashed "1", "2", "3" ... etc easily. Adding a secret prefix can help raise the security to certain extent.
 
 ### runner.py
 Basically it is the `main` of the program. With the help of flask, the API entry point is provided in the way like below:
