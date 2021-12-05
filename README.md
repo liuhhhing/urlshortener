@@ -146,6 +146,8 @@ The reason of hashing the unqiue id instead of hashing the longURL is that, this
 
 Another reason for using a range of id is that when we want to run the program as microservice, and when multiple of the instance is run, they can be assigned with different range of id so they won't be clashed. However, this needs another service to provide the range of id that is being "free-to-use" or "being-used" and get retrieved by the program (this can be specified by the argument `--tokenUrl`, but it is in to-be-implemented stage).
 
+Notice the id hashing is simplified. For security reason we added a static text as the prefix to the id before hashing. For example, instead of hashing the "1", we hash the text "secretkey_1". This is important because URL shortener is not just to shorten the long URL, but also to some extent hide the Long URL information. Let say when you try to share a photo from a private cloud to only some friend, you don't want attacker ping-pong the LongURL from easily using the hashed "1", "2", "3" and so on to see what LongURL is stored and retrieve any private LongURL. Adding a secret prefix can add security to certain extend.
+
 ### runner.py
 Basically it is the `main` of the program. With the help of flask, the API entry is provided in the way like below:
 
@@ -192,6 +194,9 @@ The shortener basically maintain a counter (specified by the argument `--countRa
 4. If all the unique id are used up and still clash, return error
 5. If the tokenUrl (specified by the argument `--tokenUrl`) is implemented, the step 4 above should go to retrieve another 'free-to-use' id range from the range assigner service rather than return error, unless the range assigner service is also failed.
 
+> Hashing
+The Hashing is using SHA256, and a hardcoded secret key is added as a prefix before the unique id so the LongURL will not be easily get retreived if attacker try to use a hashed "1", "2", "3" and so on ... to try retreiving the LongURL stored.
+
 ### mappingStore.py
 The mappingStore basically provide the interface to save and load the mapping data. The data are physically stored as a file and can be specified by the argument `--mappingStoreFile`. To be brief, it will do:
 
@@ -200,6 +205,12 @@ The mappingStore basically provide the interface to save and load the mapping da
 3. Provide longURL search for existing check
 4. Provide insertion of mapping (id, longUrl, hash)
 
+> Notice
+In multiple instance case, since all instance should be running with different counter range (presume), it shouldn't cause any conflict in inserting record to the storage.
+
+## Unit Test
+
+
 ## Future Work
 There is a list of TODO for this work:
 
@@ -207,5 +218,5 @@ There is a list of TODO for this work:
 2. Check if the incoming LongURL request is a valid URL (at least the format is correct), rather than allowing them put a random text
 3. Support HTTPS
 4. Support Authentication optionally
-5. Rather than using a range of id (say like 1 to 10) to hash, we should further 'encode' the id using a secret key before hashing. It will be safer from security point of view when the attacker can guess the hash value from 1, 2, 3, 4 ... and retreive the LongURL. URL Shortener to some extent is to hide the information from the actual Long URL, which could be public only to certain people. Consider when you want to share a photo from your own cloud and the URL is shortened and sent to only few invited people, you don't want someone can retrieve the LongURL from the shortner map.
+5. Do not use mappingStore which is a concrete implementation to sqlite. Use interface instead so we can easily change to use different store implementation like different DB (e.g. Oracle) or some other NoSQL DB (like Redis) ... etc. It will also help to mock up the storage engine for testing.
 
