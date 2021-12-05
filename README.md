@@ -14,7 +14,9 @@ When the stored shortened URL is entered in the browser, the service will redire
 
 ## How to run it
 ### Service
-It is a python program (support both python version 2 and version 3) so it can be run in cross platform manner. Below describe how this can be run in Linux platform:
+It is a python program (support both python version 2 and version 3) so it can be run in cross platform manner. Below describe how this can be run in Linux platform.
+
+Notice the program is using flask module to provide the Web Application functionality, please do `pip install flask` if it is not installed.
 
 To run it, basically just do ```python ./runner.py``` then it will by default bind address '0.0.0.0' in the running host and occupy the port 5050 for listening the request, with the output like below:
 
