@@ -9,12 +9,14 @@ class MappingStore:
         self.store_path = None
 
     def get_db(self):
-        self.db_connection = sqlite3.connect(str(self.store_path), detect_types=sqlite3.PARSE_DECLTYPES)
+        if self.db_connection is None:
+            self.db_connection = sqlite3.connect(str(self.store_path), detect_types=sqlite3.PARSE_DECLTYPES)
         return self.db_connection, self.db_connection.cursor()
 
     def close_db(self):
         if self.db_connection is not None:
             self.db_connection.close()
+            self.db_connection = None
 
     def init_db(self):
 
