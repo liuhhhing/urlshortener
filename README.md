@@ -63,6 +63,8 @@ optional arguments:
                         every run the previous log will not be overwritten
 ```
 
+Their usage will be described later.
+
 ### Client - HTTP Based
 #### Shorten Request
 ```
