@@ -193,7 +193,7 @@ It will use the shortener.py and mappingStore.py to help doing the hashing, coun
 5. If a clean hash can be located, it will return a success response of 200
 
 > For Get /{hash_id}
-1. Check from the incoming /{hash_id} GET request, the shortURL exists or not, using the **mappingStore.py**
+1. Check from the incoming `GET /{hash_id}` request, the shortURL exists or not, using the **mappingStore.py**
 2. If yes, it will redirect to the LongURL that stored
 3. If no, it will return Error response of 400
 
@@ -208,7 +208,7 @@ The shortener basically maintain a counter (specified by the argument `--countRa
 
 > Hashing
 
-The Hashing is using SHA256, and a hardcoded secret key is added as a prefix before the unique id so the LongURL will not be easily get retreived if attacker try to use a hashed "1", "2", "3" and so on ... to try retreiving the LongURL stored.
+The Hashing is using SHA256, and a hardcoded secret key is added as a prefix to the unique id for some security reason.
 
 ### mappingStore.py
 The mappingStore basically provide the interface to save and load the mapping data. The data are physically stored as a file and can be specified by the argument `--mappingStoreFile`. To be brief, it will do:
@@ -216,7 +216,7 @@ The mappingStore basically provide the interface to save and load the mapping da
 1. Provide read/write to the db using sqlite3
 2. Provide hash search for duplicate check
 3. Provide longURL search for existing check
-4. Provide insertion of mapping (id, longUrl, hash)
+4. Provide insertion of mapping data (id, longUrl, hash)
 
 > Safe for single DB in multiple run
 
