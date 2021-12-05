@@ -94,4 +94,41 @@ It will return:
 ```
 
 ## Technical Notes
+This python program is using the python web application "flask", for detail please read this link https://flask.palletsprojects.com/en/2.0.x/quickstart/
 
+Basically the following modules implemented the logic:
+```
+runner.py
+mappingStore.py
+shortener.py
+```
+
+### runner.py
+Basically it is the `main` of the program. With the help of flask, the API entry is provided in the way like below:
+
+The POST API /shorten, in runner.py
+```
+@app.route("/shorten", methods=['POST'])
+def shorten():
+    if request.method == 'POST':
+    ... (the shortening logic)
+```
+
+The GET API, in runner.py
+```
+@app.route('/<hashed_id>')
+def redirect_to_link(hashed_id):
+    ... (the redirection logic)
+```
+
+It will use the shortener.py and mappingStore.py to help doing the hashing, counter and mapping storage. To be brief:
+
+```
+```
+
+### shortener.py
+It will do the below:
+
+```
+1. Generate the hashing 
+```
