@@ -1,16 +1,16 @@
 # python urlshortener service
 ## Description
-This is a service written in python and providing the URL shortening functionality. For example, when it is given a long URL like below (using HTTP POST request):
+This is a REST API service written in python and provides the URL shortening function. For example, when the below long URL is given:
 
-```http://google.com/this/is/what/i/want_to/be/shorten```
+```http://google.com/this/is/what/i/want/to/be/shorten/please```
 
 The service will return the shortened URL as of below (example):
 
 ```http://urlshortener.com/6y78crfg```
 
-The response URL will be in the format: `http://<response URL prefix>/<shortened value with characters in [a-z][A-Z][0-9]>`
+The response URL will be in the format: `http://<response URL prefix>/<shortened value with characters in [a-z][A-Z][0-9]>`. The request will be a HTTP POST request REST API call which will be talked about later.
   
-When the stored shortened URL is entered in the browser (HTTP GET Request), the service will redirect the browser to the original long URL that stored.
+When the stored shortened URL is entered in the browser, the service will redirect the browser to the original long URL that stored.
 
 ## How to run it
 ### Service
