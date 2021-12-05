@@ -1,8 +1,6 @@
 import argparse
-import hashlib
 import socket
 import datetime
-import requests
 from flask import Flask, jsonify, redirect
 from flask import request
 import logging
@@ -108,18 +106,22 @@ if __name__ == "__main__":
     parser.add_argument('--ip', dest='ip', type=str, required=False, default='0.0.0.0',
                         help='The ip address to bind for running the service')
     parser.add_argument('--responseUrlprefix', dest='response_url_prefix', type=str, required=False,
-                        help='The response URL prefix return to the POST request, when it is not defined it will be defaulted to system hostname')
+                        help='The response URL prefix return to the POST request in the format of http://www.myDesiredDomain/,'
+                             'when it is not defined it will be defaulted to system hostname and port like http://www.myHost.com:5050/')
     parser.add_argument('--firstN', dest='first_N', type=int, required=False, default=7,
                         help='The first n characters from the hashed counter to form the shortened URL')
     parser.add_argument('--tokenUrl', dest='token_url', type=str, required=False,
-                        help='The URL to get the range of available counter when it is running in distributed manner')
+                        help='The URL to get the range of available counter when it is running in distributed manner (To-Be-Implemented)')
     parser.add_argument('--countRange', dest='count_range', type=str, required=False,
-                        help='Hyphen separated range, for example 1-100, if it is not defined it will be default run from 1 to infinite')
+                        help='Hyphen separated range, for example 1-100, if it is not defined it will be defaulted from 1 to sizeof(int)')
     parser.add_argument('--mappingStoreFile', dest='mapping_store_file', type=str, default='mapping.sqlite',
                         required=False,
-                        help='The file path that the mapping saved to, if it is not defined it will be defaulted to be the current running directory and named as mapping.sqlite')
+                        help='The file path that the mapping file saved to, if it is not defined it will be defaulted to be the current'
+                             ' running directory and named as mapping.sqlite')
     parser.add_argument('--loggerFilePath', dest='logger_file_path', type=str, required=False,
-                        help='The logger file path, if it is not specified, no log will be outputted to file')
+                        help='The logger file path, if it is not specified, the log will be outputted to console'
+                             'Notice the log file name will be appended with the "_YYYYMMDDhhmmss" so on every run '
+                             'the previous log will not be overwritten')
 
     args = parser.parse_args()
 
