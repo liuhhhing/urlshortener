@@ -195,6 +195,7 @@ The shortener basically maintain a counter (specified by the argument `--countRa
 5. If the tokenUrl (specified by the argument `--tokenUrl`) is implemented, the step 4 above should go to retrieve another 'free-to-use' id range from the range assigner service rather than return error, unless the range assigner service is also failed.
 
 > Hashing
+
 The Hashing is using SHA256, and a hardcoded secret key is added as a prefix before the unique id so the LongURL will not be easily get retreived if attacker try to use a hashed "1", "2", "3" and so on ... to try retreiving the LongURL stored.
 
 ### mappingStore.py
@@ -205,11 +206,18 @@ The mappingStore basically provide the interface to save and load the mapping da
 3. Provide longURL search for existing check
 4. Provide insertion of mapping (id, longUrl, hash)
 
-> Notice
+> Safe for single DB in multiple run
+
 In multiple instance case, since all instance should be running with different counter range (presume), it shouldn't cause any conflict in inserting record to the storage.
 
 ## Unit Test
+The unit test is in the `test/test.py` and using python unittest. To run the test, issue the following command:
 
+```
+python -m unittest test/test.py
+```
+
+It will output different log and it will be stopped when failure happens.
 
 ## Future Work
 There is a list of TODO for this work:
