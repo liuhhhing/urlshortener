@@ -107,7 +107,9 @@ Now, we are going to shorten the http://www.google.com where the shortening serv
 100    92  100    55  100    37  11588   7796 --:--:-- --:--:-- --:--:-- 23000{"ShortenedURL":"http://192.168.1.15:5050/ef2d127"}
 ```
 
-You can see the response is a JSON with key = "ShortenedURL" and the value = "http://192.168.1.15:5050/ef2d127", which is the shortened URL. The response URL prefix http://192.168.1.15:5050 can be specified by the argument `--responseUrlprefix`.
+You can see the response is a JSON with key = "ShortenedURL" and the value = "http://192.168.1.15:5050/ef2d127", which is the shortened URL. The response URL prefix http://192.168.1.15:5050 can be specified by the argument `--responseUrlprefix`. If it is not specified it will use the binded address and port that the shortening service run.
+
+This `--responseUrlprefix` is useful when the redirection function is provided by another service.
 
 
 #### Redirection Request
@@ -135,7 +137,7 @@ It will return:
 You can see from the curl response above it is returning the original long URL.
 
 ## Technical Notes
-This python program is using the python web application "flask", for detail please read this link https://flask.palletsprojects.com/en/2.0.x/quickstart/
+This python program is using a python web application "flask", for detail please read this link https://flask.palletsprojects.com/en/2.0.x/quickstart/
 
 Basically the following modules implemented the logic:
 ```
@@ -148,16 +150,20 @@ The idea of the program is to assign an unique id (specified in argument `--coun
 
 The unique id is a range of integer that the program assigned to, it can be 1 to 10, 50 to 200 or 1 to sizeof(int), ... etc.
 
-The reason of hashing the unqiue id instead of hashing the longURL is that, this can avoid the hash clash when the first 7 characters can be the same over some long URLs. Even though the hash of unique id can still be clashed (consider the hash of integer 'n' can clash the hash of integer 'm'), since it is controlled by the program it can be avoided by finding the next unique id from the range until no clash happens.
+The reason of hashing the unqiue id instead of hashing the longURL is that, this can avoid the hash clash when the first 7 characters can be the same over some long URLs. Even though the hash of certain unique ids can still be clashed (consider the hash of integer 'n' can clash the hash of integer 'm'), since it is controlled by the program it can be avoided by finding the next unique id from the range until no clash happens.
 
-Another reason for using a range of id is that when we want to run the program as microservice, and when multiple of the instance is run, they can be assigned with different range of id so they won't be clashed. However, this needs another service to provide the range of id that is being "free-to-use" or "being-used" and get retrieved by the program (this can be specified by the argument `--tokenUrl`, but it is in to-be-implemented stage).
+Another reason for using a range of id is that when we want to run the program as microservice, and when multiple of the instance is run, they can be assigned with different range of id so they won't be clashed.
 
-Notice the id hashing is simplified. For security reason we added a static text as the prefix to the id before hashing. For example, instead of hashing the "1", we hash the text "secretkey_1". This is important because URL shortener is not just to shorten the long URL, but also to some extent hide the Long URL information. Let say when you try to share a photo from a private cloud to only some friend, you don't want attacker ping-pong the LongURL from easily using the hashed "1", "2", "3" and so on to see what LongURL is stored and retrieve any private LongURL. Adding a secret prefix can add security to certain extend.
+However, this needs another service to provide the range of id that is being "free-to-use" or "being-used" and get retrieved by the program (this can be specified by the argument `--tokenUrl`. ***Notice it is in to-be-implemented stage and not supported***.
+
+The idea of hasing the id is simplified. For security reason we added a static text as the prefix to the id before hashing. The static text is stored in the shortener.py.
+
+For example, instead of hashing the "1", we hash the text "secretkey_1". This is important because URL shortener is not just to shorten the long URL, but also to some extent hide the Long URL information. Let's say when you try to share a photo from a private cloud to only some friends, you don't want hacker to retreive the Long URL by issuing a `HTTP GET /{hash_value}` with the hash_value from hashed "1", "2", "3" ... etc easily. Adding a secret prefix can add security to certain extent.
 
 ### runner.py
-Basically it is the `main` of the program. With the help of flask, the API entry is provided in the way like below:
+Basically it is the `main` of the program. With the help of flask, the API entry point is provided in the way like below:
 
-The POST API /shorten, in runner.py
+> The POST API /shorten, in runner.py
 ```
 @app.route("/shorten", methods=['POST'])
 def shorten():
@@ -165,14 +171,14 @@ def shorten():
     ... (the shortening logic)
 ```
 
-The GET API, in runner.py
+> The GET API /{hash_id}, in runner.py
 ```
 @app.route('/<hashed_id>')
 def redirect_to_link(hashed_id):
     ... (the redirection logic)
 ```
 
-It will use the shortener.py and mappingStore.py to help doing the hashing, counter and mapping storage. To be brief, the runner.py will do:
+It will use the shortener.py and mappingStore.py to help doing the hashing, counter management and mapping storage. To be brief, the runner.py will do:
 
 > General
 1. Do logging, the logging file can be specified by the `--loggerFilePath` and on each start of the program, the logging file name will be appended with the datetime %Y%m%d%H%M%S so the log of the previous run won't be lost.
@@ -223,7 +229,7 @@ The unit test is in the `test/test.py` and using python unittest. To run the tes
 python -m unittest test/test.py
 ```
 
-It will output different log and it will be stopped when failure happens.
+It will output different log and it will be stopped when failure happens. Different test scenario are covered and they should be self-explained from the test/test.py.
 
 ## Future Work
 There is a list of TODO for this work:
@@ -232,5 +238,5 @@ There is a list of TODO for this work:
 2. Check if the incoming LongURL request is a valid URL (at least the format is correct), rather than allowing them put a random text
 3. Support HTTPS
 4. Support Authentication optionally
-5. Do not use mappingStore which is a concrete implementation to sqlite. Use interface instead so we can easily change to use different store implementation like different DB (e.g. Oracle) or some other NoSQL DB (like Redis) ... etc. It will also help to mock up the storage engine for testing.
+5. Do not use mappingStore which is a concrete implementation to sqlite. Use interface instead so we can easily change to use different store implementation like different DB (e.g. Oracle), or some other NoSQL DB (like Redis), or queue like Kafka ... etc. It will also help to mock up the storage engine for testing.
 
