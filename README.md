@@ -13,7 +13,9 @@ The response URL will be in the format: `http://<response URL prefix>/<shortened
 When the stored shortened URL is entered in the browser, the service will redirect the browser to the original long URL that stored.
 
 ## How to run it
-### Service
+This section describe how to run the service, and how to run the client to issue request for shortening and redirection.
+
+### Rest API Service
 It is a python program (support both python version 2 and version 3) so it can be run in cross platform manner. Below describe how this can be run in Linux platform.
 
 Notice the program is using flask module to provide the Web Application functionality, please do `pip install flask` if it is not installed.
@@ -65,7 +67,7 @@ optional arguments:
 
 Their usage will be described later.
 
-### Client - HTTP Based
+### HTTP Client
 #### Shorten Request
 ```
 POST /shorten
