@@ -7,7 +7,7 @@ class Shortener:
         self.counter = 1
         self.counter_upper_limit = -1  # means no limit
         self.token_url = ''
-        self.url_prefix = ''
+        self.response_url_prefix = ''
         self.mapping_store = None
         # self.file_path = ''
         # self.mapping = {} # this is a dictionary in memory

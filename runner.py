@@ -54,7 +54,7 @@ def shorten():
         if g_mapping_store.is_long_url_exist(long_url):
             # if it exists just return directly from the g_mapping_store
             hashed_url = g_mapping_store.get_hash_from_long_url(long_url)
-            response = {response_key: g_shortener.url_prefix + hashed_url}
+            response = {response_key: g_shortener.response_url_prefix + hashed_url}
             return jsonify(response), 200
 
         # if it doesn't exist then generate the valid shortened URL
@@ -62,10 +62,10 @@ def shorten():
         if not succeed and g_shortener.still_can_hash() is False:
             return jsonify({'Error': 'Counter All used up'}), 400
 
-        return jsonify({response_key: g_shortener.url_prefix + short_url}), 200
+        return jsonify({response_key: g_shortener.response_url_prefix + short_url}), 200
 
 
-def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, url_prefix=None, token_url=None, count_start=1, count_end=-1,
+def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, response_url_prefix=None, token_url=None, count_start=1, count_end=-1,
                     mapping_store_file=None, logger_file_path=None):
     # if logger_file_path exist it will log to file, otherwise it will log to stdout and stderr
     if logger_file_path is not None:
@@ -78,16 +78,13 @@ def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, url_prefix=None, token_u
     app.logger.info("Running The Shortener service")
 
     # specify a custom URL prefix to return to the user
-    if url_prefix is not None:
-        if port != 80:
-            g_shortener.url_prefix = url_prefix.strip('/') + ":" + str(port) + "/"
-        else:
-            g_shortener.url_prefix = url_prefix.strip('/') + "/"
+    if response_url_prefix is not None:
+        g_shortener.response_url_prefix = response_url_prefix.strip('/') + "/"
     else:
         if port != 80:
-            g_shortener.url_prefix = "http://" + socket.gethostname() + ":" + str(port) + "/"
+            g_shortener.response_url_prefix = "http://" + socket.gethostname() + ":" + str(port) + "/"
         else:
-            g_shortener.url_prefix = "http://" + socket.gethostname() + "/"
+            g_shortener.response_url_prefix = "http://" + socket.gethostname() + "/"
 
     g_shortener.first_n_char = first_N
     if token_url is not None:
@@ -110,8 +107,8 @@ if __name__ == "__main__":
                         help='The port the service running at')
     parser.add_argument('--ip', dest='ip', type=str, required=False, default='0.0.0.0',
                         help='The ip address to bind for running the service')
-    parser.add_argument('--urlprefix', dest='url_prefix', type=str, required=False,
-                        help='The URL prefix return to the POST request, when it is not defined it will be defaulted to system hostname')
+    parser.add_argument('--responseUrlprefix', dest='response_url_prefix', type=str, required=False,
+                        help='The response URL prefix return to the POST request, when it is not defined it will be defaulted to system hostname')
     parser.add_argument('--firstN', dest='first_N', type=int, required=False, default=7,
                         help='The first n characters from the hashed counter to form the shortened URL')
     parser.add_argument('--tokenUrl', dest='token_url', type=str, required=False,
@@ -130,7 +127,7 @@ if __name__ == "__main__":
     setup_shortener(ip=args.ip,
                     port=args.port,
                     first_N=args.first_N,
-                    url_prefix=args.url_prefix,
+                    response_url_prefix=args.response_url_prefix,
                     token_url=args.token_url,
                     count_start=1 if args.count_range is None else args.count_range.split("-")[0],
                     count_end=-1 if args.count_range is None else args.count_range.split("-")[1],
