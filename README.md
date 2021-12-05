@@ -229,7 +229,13 @@ The unit test is in the `test/test.py` and using python unittest. To run the tes
 python -m unittest test/test.py
 ```
 
-It will output different log and it will be stopped when failure happens. Different test scenario are covered and they should be self-explained from the test/test.py.
+It will output different log and should take around 10 seconds to complete. If any failure happens it will be stopped and show something like below at the end:
+
+```
+FAILED (failures=8)
+```
+
+Different test scenario are covered and they should be self-explained from the test/test.py.
 
 ## Future Work
 There is a list of TODO for this work:
@@ -239,4 +245,5 @@ There is a list of TODO for this work:
 3. Support HTTPS
 4. Support Authentication optionally
 5. Do not use mappingStore which is a concrete implementation to sqlite. Use interface instead so we can easily change to use different store implementation like different DB (e.g. Oracle), or some other NoSQL DB (like Redis), or queue like Kafka ... etc. It will also help to mock up the storage engine for testing.
+6. ... (and a lot to make it complete)
 
