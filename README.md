@@ -227,16 +227,24 @@ The mappingStore basically provide the interface to save and load the mapping da
 In multiple instance case, since all instance should be running with different counter range (presume), it shouldn't cause any conflict in inserting record to the storage.
 
 ## Unit Test
-The unit test is in the `test/test.py` and using python unittest. To run the test, issue the following command:
+The unit test is `test.py` and using python unittest. To run the test, issue the following command:
 
 ```
-python -m unittest test/test.py
+python -m unittest test
 ```
 
 It will output different log and should take around 10 seconds to complete. If any failure happens it will be stopped and show something like below at the end:
 
 ```
 FAILED (failures=8)
+```
+
+On Success you should see something like below:
+
+```
+Ran 10 tests in 1.784s
+
+OK
 ```
 
 Different test scenario are covered and they should be self-explained from the test/test.py.
