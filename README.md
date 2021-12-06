@@ -102,9 +102,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '[{"LongURL":"http://www.g
 Now, we are going to shorten the http://www.google.com where the shortening service is running at 192.168.1.15 with port 5050, the return will be like:
 
 ```
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100    92  100    55  100    37  11588   7796 --:--:-- --:--:-- --:--:-- 23000{"ShortenedURL":"http://192.168.1.15:5050/ef2d127"}
+{"ShortenedURL":"http://192.168.1.15:5050/ef2d127"}
 ```
 
 You can see the response is a JSON with key = "ShortenedURL" and the value = "http://192.168.1.15:5050/ef2d127", which is the shortened URL. The response URL prefix http://192.168.1.15:5050 can be specified by the argument `--responseUrlprefix`. If it is not specified it will use the binded address and port that the shortening service run.
@@ -126,15 +124,19 @@ curl http://192.168.1.15:5050/ef2d127
 It will return:
 
 ```
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100   248  100   248    0     0  54469      0 --:--:-- --:--:-- --:--:-- 82666<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <title>Redirecting...</title>
 <h1>Redirecting...</h1>
 <p>You should be redirected automatically to target URL: <a href="http://www.google.com">http://www.google.com</a>. If not click the link.
 ```
 
 You can see from the curl response above it is returning the original long URL.
+
+If we issue a shorten URL `HTTP GET /` request with the hash_id not defined in the stored mapping, it will output below (the invalid hash is `abadare3`):
+
+```
+{"Error":"No record for this shortened URL abadare3"}
+```
 
 ## Technical Notes
 This python program is using a python web application "flask", for detail please read this link https://flask.palletsprojects.com/en/2.0.x/quickstart/
@@ -227,16 +229,24 @@ The mappingStore basically provide the interface to save and load the mapping da
 In multiple instance case, since all instance should be running with different counter range (presume), it shouldn't cause any conflict in inserting record to the storage.
 
 ## Unit Test
-The unit test is in the `test/test.py` and using python unittest. To run the test, issue the following command:
+The unit test is `test.py` and using python unittest. To run the test, issue the following command:
 
 ```
-python -m unittest test/test.py
+python -m unittest test
 ```
 
 It will output different log and should take around 10 seconds to complete. If any failure happens it will be stopped and show something like below at the end:
 
 ```
 FAILED (failures=8)
+```
+
+On Success you should see something like below:
+
+```
+Ran 10 tests in 1.784s
+
+OK
 ```
 
 Different test scenario are covered and they should be self-explained from the test/test.py.
