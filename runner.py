@@ -48,6 +48,7 @@ def shorten():
     response_key = 'ShortenedURL'
     if request.method == 'POST':
         # get the URL to be shorten
+        app.logger.debug(request.json)
         long_url = request.json[0]['LongURL']
         if g_mapping_store.is_long_url_exist(long_url):
             # if it exists just return directly from the g_mapping_store
@@ -88,8 +89,7 @@ def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, response_url_prefix=None
     if token_url is not None:
         g_shortener.token_url = token_url
 
-    g_shortener.counter = count_start
-    g_shortener.counter_upper_limit = count_end
+    g_shortener.set_counter_range(count_start, count_end)
 
     # initialize the flask
     app.logger.info("Start the service")
@@ -131,8 +131,8 @@ if __name__ == "__main__":
                     first_N=args.first_N,
                     response_url_prefix=args.response_url_prefix,
                     token_url=args.token_url,
-                    count_start=1 if args.count_range is None else args.count_range.split("-")[0],
-                    count_end=-1 if args.count_range is None else args.count_range.split("-")[1],
+                    count_start=1 if args.count_range is None else int(args.count_range.split("-")[0]),
+                    count_end=-1 if args.count_range is None else int(args.count_range.split("-")[1]),
                     mapping_store_file=args.mapping_store_file,
                     logger_file_path=args.logger_file_path)
     app.run(host=args.ip, port=args.port)
