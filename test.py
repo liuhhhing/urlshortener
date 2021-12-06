@@ -8,7 +8,7 @@ import hashlib
 
 
 def get_shortened_url(to_be_hash, domain):
-    hash_value = hashlib.sha256(('+goodwish toHongKong' + str(to_be_hash)).encode()).hexdigest()[:7]
+    hash_value = hashlib.sha256(('+goodwishtoHongKong' + str(to_be_hash)).encode()).hexdigest()[:7]
     shortened = """{0}{1}""".format(domain, hash_value)
     shortened = '{"ShortenedURL":"' + shortened + '"}\n'
     return shortened, hash_value
