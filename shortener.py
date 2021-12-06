@@ -1,5 +1,6 @@
 import logging
 import hashlib
+import mappingStore
 from multiprocessing import Value
 
 class Shortener:
@@ -9,8 +10,8 @@ class Shortener:
         self.counter_upper_limit = -1  # means no limit
         self.token_url = ''
         self.response_url_prefix = ''
-        self.mapping_store = None
         self.secret_key = '+goodwishtoHongKong'
+        self.db_path = None
         # self.file_path = ''
         # self.mapping = {} # this is a dictionary in memory
 
@@ -25,7 +26,8 @@ class Shortener:
         with self.counter.get_lock():
             hash_operation = hashlib.sha256((self.secret_key + str(self.counter.value)).encode()).hexdigest()[:self.first_n_char]
             logging.debug('{{Counter, Hash}} = {{{0},{1}}}'.format(self.counter.value, hash_operation))
-            while self.mapping_store.is_hashed_url_exist(hash_operation):  # loop until no cash
+            mapping_store = mappingStore.MappingStore(self.db_path)
+            while mapping_store.is_hashed_url_exist(hash_operation):  # loop until no cash
                 # it should happen very rare
                 logging.debug('{{Counter, Hash}} = {{{0},{1}}} clash, try again'.format(self.counter.value, hash_operation))
                 self.counter.value = self.counter.value + 1
@@ -35,12 +37,13 @@ class Shortener:
 
             if self.still_can_hash() == False:
                 logging.debug('{{Counter, Hash}} = {{{0},{1}}} limit reached'.format(self.counter.value, hash_operation))
-                return ''  # just return nothing
+                return '', -1  # just return nothing
 
             logging.debug('{{Counter, Hash}} = {{{0},{1}}} succeed'.format(self.counter.value, hash_operation))
             # all success, inc the counter
+            return_counter = self.counter.value
             self.counter.value = self.counter.value + 1
-            return hash_operation[:self.first_n_char]
+            return hash_operation[:self.first_n_char], return_counter
 
     def refresh_counter(self):
         if len(self.token_url) > 0:
@@ -53,9 +56,10 @@ class Shortener:
         return False
 
     def generate_shortened_url(self, longUrl):
-        hash_value = self.generate_hash()
+        hash_value, counter_id = self.generate_hash()
         if len(hash_value) == 0 and self.still_can_hash() is False:
             return '', False
 
-        self.mapping_store.insert_hashed_url(self.counter.value - 1, longUrl, hash_value)
+        mapping_store = mappingStore.MappingStore(self.db_path)
+        mapping_store.insert_hashed_url(counter_id, longUrl, hash_value)
         return hash_value, True

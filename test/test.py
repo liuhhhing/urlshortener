@@ -230,6 +230,58 @@ class MyTestCase(unittest.TestCase):
         shortened, hash_value = get_shortened_url(55, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
+    def test_multiple(self):
+        init_app()
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, mapping_store_file='test.sqlite', count_start=1, count_end=20)
+        clean_db()
+
+        def thread_func():
+            app.run()
+
+        threading.Thread(target=thread_func)
+
+        def thread_client(start,end):
+            for x in range(start,end+1):
+                url = 'http://www.music{0}.com'.format(x)
+                app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': url}])
+
+        c1 = threading.Thread(target=thread_client, args=(1,10))
+        c2 = threading.Thread(target=thread_client, args=(11,20))
+
+        c1.start()
+        c2.start()
+
+        c1.join()
+        c2.join()
+
+        expected_long_url_list = ['http://www.music1.com',
+                                  'http://www.music10.com',
+                                  'http://www.music11.com',
+                                  'http://www.music12.com',
+                                  'http://www.music13.com',
+                                  'http://www.music14.com',
+                                  'http://www.music15.com',
+                                  'http://www.music16.com',
+                                  'http://www.music17.com',
+                                  'http://www.music18.com',
+                                  'http://www.music19.com',
+                                  'http://www.music2.com',
+                                  'http://www.music20.com',
+                                  'http://www.music3.com',
+                                  'http://www.music4.com',
+                                  'http://www.music5.com', 'http://www.music6.com', 'http://www.music7.com', 'http://www.music8.com', 'http://www.music9.com']
+        long_url_list = []
+        for x in range(1, 20+1):
+            shortened, hash_value = get_shortened_url(x, 'http://mydomain.com/')
+            rv = app.test_client().get('/' + hash_value)
+            long_url_list.append(rv.location)
+
+        # since it is in multithread the hash value (for example "1") can map to the url of 2 (for example http://music3.com)
+        # so now we just make sure the hash get of 1-20 can get our desired list of URL correctly
+        long_url_list.sort()
+        self.assertEqual(long_url_list, expected_long_url_list)
+
+
 
     def test_stress(self):
         init_app()

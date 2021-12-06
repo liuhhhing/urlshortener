@@ -10,21 +10,15 @@ import mappingStore
 app = Flask(__name__)
 
 g_shortener = None
-g_mapping_store = None
-
+g_db_path = None
 
 def init_app():
     global g_shortener
-    global g_mapping_store
     g_shortener = shortener.Shortener()
-    g_mapping_store = mappingStore.MappingStore()
-
-    g_shortener.mapping_store = g_mapping_store
-
 
 def clean_db():
-    global g_mapping_store
-    g_mapping_store.clean_db()
+    mapping_store = mappingStore.MappingStore(g_db_path)
+    mapping_store.clean_db()
 
 
 def set_shortener_range(start=1, end=-1):
@@ -35,10 +29,11 @@ def set_shortener_range(start=1, end=-1):
 
 @app.route('/<hashed_id>')
 def redirect_to_link(hashed_id):
-    if not g_mapping_store.is_hashed_url_exist(hashed_id):
+    mapping_store = mappingStore.MappingStore(g_db_path)
+    if not mapping_store.is_hashed_url_exist(hashed_id):
         return jsonify({'Error': 'No record for this shortened URL ' + hashed_id}), 400
 
-    long_url = g_mapping_store.get_long_url_from_hash(hashed_id)
+    long_url = mapping_store.get_long_url_from_hash(hashed_id)
     print(long_url)
     return redirect(long_url)
 
@@ -50,9 +45,10 @@ def shorten():
         # get the URL to be shorten
         app.logger.debug(request.json)
         long_url = request.json[0]['LongURL']
-        if g_mapping_store.is_long_url_exist(long_url):
+        mapping_store = mappingStore.MappingStore(g_db_path)
+        if mapping_store.is_long_url_exist(long_url):
             # if it exists just return directly from the g_mapping_store
-            hashed_url = g_mapping_store.get_hash_from_long_url(long_url)
+            hashed_url = mapping_store.get_hash_from_long_url(long_url)
             response = {response_key: g_shortener.response_url_prefix + hashed_url}
             return jsonify(response), 200
 
@@ -90,13 +86,17 @@ def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, response_url_prefix=None
         g_shortener.token_url = token_url
 
     g_shortener.set_counter_range(count_start, count_end)
+    g_shortener.db_path = mapping_store_file
 
     # initialize the flask
     app.logger.info("Start the service")
 
-    g_mapping_store.logger = app.logger
-    g_mapping_store.store_path = mapping_store_file
-    g_mapping_store.init_db()
+    global g_db_path
+    g_db_path = mapping_store_file
+
+    mapping_store = mappingStore.MappingStore(mapping_store_file)
+    mapping_store.init_db()
+
 
 
 if __name__ == "__main__":

@@ -4,9 +4,9 @@ import logging
 
 
 class MappingStore:
-    def __init__(self):
+    def __init__(self, store_path):
         self.db_connection = None
-        self.store_path = None
+        self.store_path = store_path
 
     def get_db(self):
         if self.db_connection is None:
@@ -19,7 +19,6 @@ class MappingStore:
             self.db_connection = None
 
     def init_db(self):
-
         db, cursor = self.get_db()
         try:
             cursor.execute('''CREATE TABLE IF NOT EXISTS mapping (
