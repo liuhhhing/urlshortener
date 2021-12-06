@@ -210,6 +210,10 @@ The shortener basically maintain a counter (specified by the argument `--countRa
 
 The Hashing is using SHA256, and a hardcoded secret key is added as a prefix to the unique id for some security reason.
 
+> Atomic Counter Increment
+
+The counter is using the python `multiprocessing.Value` and its `get_lock()` to ensure the atomicity of counter increment when multiple `POST /shorten` request arrive.
+
 ### mappingStore.py
 The mappingStore basically provide the interface to save and load the mapping data. The data are physically stored as a file and can be specified by the argument `--mappingStoreFile`. To be brief, it will do:
 
