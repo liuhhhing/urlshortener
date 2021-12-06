@@ -22,9 +22,9 @@ class MappingStore:
         db, cursor = self.get_db()
         try:
             cursor.execute('''CREATE TABLE IF NOT EXISTS mapping (
-                [id] INTEGER NOT NULL,
-                [long_url] text NOT NULL,
-                [short_url_hash] text NOT NULL,
+                [id] INTEGER NOT NULL unique,
+                [long_url] text NOT NULL unique,
+                [short_url_hash] text NOT NULL unique,
                 PRIMARY KEY(id, long_url, short_url_hash)
                 )''')
         except Error as e:
