@@ -92,7 +92,7 @@ POST /shorten
 The POST HTTP call can be triggered using some HTTP Rest API client like Postman or using curl command, below illustrate the behavior using curl:
 
 ```
-$ curl -X POST -H "Content-Type: application/json" -d '[{"LongURL":"http://www.google.com"}]' http://192.168.1.15:5050/shorten
+$ curl -X POST -H "Content-Type: application/json" -d '{"LongURL":"http://www.google.com"}' http://192.168.1.15:5050/shorten
 ```
 
 Now, we are going to shorten the http://www.google.com where the shortening service is running at 192.168.1.15 with port 5050, the return will be like:
@@ -140,7 +140,8 @@ This python program is using a python web application "flask", for detail please
 Basically the following modules implemented the logic:
 ```
 runner.py
-mappingStore.py
+mappingStoreInterface.py
+mappingStoreDB.py
 shortener.py
 ```
 
@@ -154,7 +155,7 @@ Another reason for using a range of id is that when we want to run the program a
 
 However, this needs another service to provide the range of id that is being "free-to-use" or "being-used" and get retrieved by the program (this can be specified by the argument `--tokenUrl`. ***Notice it is in to-be-implemented stage and not supported***.
 
-The idea of hasing the id is simplified. For security reason we added a static text, which is stored in the shortener.py, as the prefix to the id before hashing.
+For security reason we added a static text, which is stored in the shortener.py, as the prefix to the id before hashing.
 
 For example, instead of hashing the "1", we hash the text "secretkey_1". This is important because URL shortener is not just to shorten the long URL, but also to some extent hide the Long URL information. Let's say when you try to share a photo from a private cloud to only some friends, you don't want hacker to retreive the Long URL by issuing a `HTTP GET /{hash_value}` with the hash_value from hashed "1", "2", "3" ... etc easily. Adding a secret prefix can help raise the security to certain extent.
 
@@ -176,7 +177,7 @@ def redirect_to_link(hashed_id):
     ... (the redirection logic)
 ```
 
-It will use the shortener.py and mappingStore.py to help doing the hashing, counter management and mapping storage. To be brief, the runner.py will do:
+It will use the shortener.py and mappingStoreInterface.py to help doing the hashing, counter management and mapping storage. To be brief, the runner.py will do:
 
 > General
 1. Do logging, the logging file can be specified by the `--loggerFilePath` and on each start of the program, the logging file name will be appended with the datetime %Y%m%d%H%M%S so the log of the previous run won't be lost.
@@ -184,14 +185,14 @@ It will use the shortener.py and mappingStore.py to help doing the hashing, coun
 3. Store the mapping using sqlite3
 
 > For POST /shorten
-1. Check from the incoming `POST /shorten` request, the LongURL exists or not, using the **mappingStore.py**
+1. Check from the incoming `POST /shorten` request, the LongURL exists or not, using the **mappingStoreInterface.py**
 2. If yes it will return the stored shortURL directly
 3. If no, it will do the hashing, increment the counter, and store the new mapping, using **shortener.py**
 4. If all counter used up and no clean hash can be found, it will return Error response of 400
 5. If a clean hash can be located, it will return a success response of 200
 
 > For Get /{hash_id}
-1. Check from the incoming `GET /{hash_id}` request, the shortURL exists or not, using the **mappingStore.py**
+1. Check from the incoming `GET /{hash_id}` request, the shortURL exists or not, using the **mappingStoreInterface.py**
 2. If yes, it will redirect to the LongURL that stored
 3. If no, it will return Error response of 400
 
@@ -199,7 +200,7 @@ It will use the shortener.py and mappingStore.py to help doing the hashing, coun
 The shortener basically maintain a counter (specified by the argument `--countRange`) and do the hashing, to be brief, it will do:
 
 1. Assign a unique id (over the given range) to the incoming LongURL request
-2. Hash the unique id and check if the hashed id found duplicate, using **mappingStore.py**
+2. Hash the unique id and check if the hashed id found duplicate, using **mappingStoreInterface.py**
 3. If duplicate is found, just locate another unique id until the hash won't clash
 4. If all the unique id are used up and still clash, return error
 5. If the tokenUrl (specified by the argument `--tokenUrl`) is implemented, the step 4 above should go to retrieve another 'free-to-use' id range from the range assigner service rather than return error, unless the range assigner service is also failed.
@@ -212,17 +213,17 @@ The Hashing is using SHA256, and a hardcoded secret key is added as a prefix to 
 
 The counter is using the python `multiprocessing.Value` and its `get_lock()` to ensure the atomicity of counter increment when multiple `POST /shorten` request arrive.
 
-### mappingStore.py
-The mappingStore basically provide the interface to save and load the mapping data. The data are physically stored as a file and can be specified by the argument `--mappingStoreFile`. To be brief, it will do:
+### mappingStoreDB.py -> mappingStoreInterface.py
+The mappingStoreInterface basically provide the interface to save and load the mapping data. The `mappingStoreDB.py` do a concrete implementation to the interface, basically it should in general provide the following feature (no matter it is using DB, File, queue ... etc):
 
-1. Provide read/write to the db using sqlite3
-2. Provide hash search for duplicate check
+1. Provide read/write to the storage
+2. Provide hash id search for duplicate check
 3. Provide longURL search for existing check
 4. Provide insertion of mapping data (id, longUrl, hash)
 
 > Safe for single DB in multiple run
 
-In multiple instance case, since all instance should be running with different counter range (presume), it shouldn't cause any conflict in inserting record to the storage.
+In multiple instance case, since all instance should be running with different counter range (presume), it shouldn't cause any conflict in inserting record to the storage. let say if it is DB implementation then each insert should be safe. If it is File implementation it should make sure the "locking" of the file when doing "insert".
 
 ## Unit Test
 The unit test is `test.py` and using python unittest. To run the test, issue the following command:
@@ -254,6 +255,5 @@ There is a list of TODO for this work:
 2. Check if the incoming LongURL request is a valid URL (at least the format is correct), rather than allowing them put a random text
 3. Support HTTPS
 4. Support Authentication optionally
-5. Do not use mappingStore which is a concrete implementation to sqlite. Use interface instead so we can easily change to use different store implementation like different DB (e.g. Oracle), or some other NoSQL DB (like Redis), or queue like Kafka ... etc. It will also help to mock up the storage engine for testing.
-6. ... (and a lot to make it complete)
+5. The retreive of ID should be made as "interface" as well, the implementation could be a DB, or another "GET" request from another isolated service.
 
