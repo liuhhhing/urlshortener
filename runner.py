@@ -6,6 +6,7 @@ from flask import request
 import logging
 import shortener
 import mappingStoreDB
+import mappingStoreFile
 from mappingStoreInterface import MappingStoreInterface
 
 
@@ -68,6 +69,7 @@ def shorten():
 
 
 def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, response_url_prefix=None, token_url=None, count_start=1, count_end=-1,
+                    storage_type="sqlite",
                     mapping_store_file=None, logger_file_path=None):
     # if logger_file_path exist it will log to file, otherwise it will log to stdout and stderr
     if logger_file_path is not None:
@@ -102,7 +104,10 @@ def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, response_url_prefix=None
     g_db_path = mapping_store_file
 
     global  g_mapping_store
-    g_mapping_store = MappingStoreInterface.register(mappingStoreDB.MappingStoreDB)()
+    if storage_type == 'sqlite':
+        g_mapping_store = MappingStoreInterface.register(mappingStoreDB.MappingStoreDB)()
+    elif storage_type == 'file':
+        g_mapping_store = MappingStoreInterface.register(mappingStoreFile.MappingStoreFile)()
     g_mapping_store.init_or_open_store(g_db_path)
 
     g_shortener.set_mapping_store(g_mapping_store)
@@ -124,6 +129,8 @@ if __name__ == "__main__":
                         help='The URL to get the range of available counter when it is running in distributed manner (To-Be-Implemented)')
     parser.add_argument('--countRange', dest='count_range', type=str, required=False,
                         help='Hyphen separated range, for example 1-100, if it is not defined it will be defaulted from 1 to sizeof(int)')
+    parser.add_argument('--storageType', dest='storage_type', type=str, required=False, default='sqlite',
+                        help='The storage type, now it support "sqlite","file"')
     parser.add_argument('--mappingStoreFile', dest='mapping_store_file', type=str, default='mapping.sqlite',
                         required=False,
                         help='The file path that the mapping file saved to, if it is not defined it will be defaulted to be the current'
@@ -143,6 +150,7 @@ if __name__ == "__main__":
                     token_url=args.token_url,
                     count_start=1 if args.count_range is None else int(args.count_range.split("-")[0]),
                     count_end=-1 if args.count_range is None else int(args.count_range.split("-")[1]),
+                    storage_type=args.storage_type,
                     mapping_store_file=args.mapping_store_file,
                     logger_file_path=args.logger_file_path)
     app.run(host=args.ip, port=args.port)
