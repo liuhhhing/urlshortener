@@ -54,6 +54,9 @@ optional arguments:
   --countRange COUNT_RANGE
                         Hyphen separated range, for example 1-100, if it is
                         not defined it will be defaulted from 1 to sizeof(int)
+  --storageType STORAGE_TYPE
+                        The storage type, now it support "sqlite","file". If
+                        it is not specified it will be defaulted to sqlite
   --mappingStoreFile MAPPING_STORE_FILE
                         The file path that the mapping file saved to, if it is
                         not defined it will be defaulted to be the current
@@ -63,6 +66,7 @@ optional arguments:
                         will be outputted to consoleNotice the log file name
                         will be appended with the "_YYYYMMDDhhmmss" so on
                         every run the previous log will not be overwritten
+
 ```
 
 Their usage will be described later.
