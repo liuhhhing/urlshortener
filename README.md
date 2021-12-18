@@ -213,8 +213,8 @@ The Hashing is using SHA256, and a hardcoded secret key is added as a prefix to 
 
 The counter is using the python `multiprocessing.Value` and its `get_lock()` to ensure the atomicity of counter increment when multiple `POST /shorten` request arrive.
 
-### mappingStoreDB.py -> mappingStoreInterface.py
-The mappingStoreInterface basically provide the interface to save and load the mapping data. The `mappingStoreDB.py` do a concrete implementation to the interface, basically it should in general provide the following feature (no matter it is using DB, File, queue ... etc):
+### mappingStoreInterface.py
+The `mappingStoreInterface` basically provide the interface to save and load the mapping data. The `mappingStoreDB.py` and `mappingStoreFile.py` do a concrete implementation to the interface, basically it should in general provide the following feature (no matter it is using DB, File, queue ... etc):
 
 1. Provide read/write to the storage
 2. Provide hash id search for duplicate check
