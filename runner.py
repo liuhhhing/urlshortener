@@ -105,6 +105,8 @@ def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, response_url_prefix=None
     g_mapping_store = MappingStoreInterface.register(mappingStoreDB.MappingStoreDB)()
     g_mapping_store.init_or_open_store(g_db_path)
 
+    g_shortener.set_mapping_store(g_mapping_store)
+
 
 
 if __name__ == "__main__":
