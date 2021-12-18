@@ -1,12 +1,13 @@
 import sqlite3
 from sqlite3 import Error
 import logging
+from mappingStoreInterface import MappingStoreInterface
 
 
-class MappingStore:
-    def __init__(self, store_path):
+class MappingStoreDB(MappingStoreInterface):
+    def __init__(self):
         self.db_connection = None
-        self.store_path = store_path
+        self.store_path = None
 
     def get_db(self):
         if self.db_connection is None:
@@ -18,7 +19,8 @@ class MappingStore:
             self.db_connection.close()
             self.db_connection = None
 
-    def init_db(self):
+    def init_store(self, store_path):
+        self.store_path = store_path
         db, cursor = self.get_db()
         try:
             cursor.execute('''CREATE TABLE IF NOT EXISTS mapping (
@@ -98,7 +100,7 @@ class MappingStore:
         self.close_db()
         return result[0]
 
-    def clean_db(self):
+    def clean_store(self):
 
         logging.debug("Clean DB")
         db, cursor = self.get_db()
