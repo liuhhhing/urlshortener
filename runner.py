@@ -130,7 +130,7 @@ if __name__ == "__main__":
     parser.add_argument('--countRange', dest='count_range', type=str, required=False,
                         help='Hyphen separated range, for example 1-100, if it is not defined it will be defaulted from 1 to sizeof(int)')
     parser.add_argument('--storageType', dest='storage_type', type=str, required=False, default='sqlite',
-                        help='The storage type, now it support "sqlite","file"')
+                        help='The storage type, now it support "sqlite","file". If it is not specified it will be defaulted to sqlite')
     parser.add_argument('--mappingStoreFile', dest='mapping_store_file', type=str, default='mapping.sqlite',
                         required=False,
                         help='The file path that the mapping file saved to, if it is not defined it will be defaulted to be the current'
