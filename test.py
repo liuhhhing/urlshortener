@@ -26,7 +26,7 @@ class MyTestCase(unittest.TestCase):
 
         threading.Thread(target=thread_func)
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.yahoo.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.yahoo.com'})
         shortened, hash_value = get_shortened_url(1, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
@@ -40,7 +40,7 @@ class MyTestCase(unittest.TestCase):
 
         threading.Thread(target=thread_func)
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.yahoo.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.yahoo.com'})
         shortened, hash_value = get_shortened_url(1, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
@@ -57,15 +57,15 @@ class MyTestCase(unittest.TestCase):
 
         threading.Thread(target=thread_func)
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.yahoo.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.yahoo.com'})
         shortened, hash_value = get_shortened_url(1, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.yahoo.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.yahoo.com'})
         shortened, hash_value = get_shortened_url(1, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.yahoo.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.yahoo.com'})
         shortened, hash_value = get_shortened_url(1, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
@@ -82,15 +82,15 @@ class MyTestCase(unittest.TestCase):
 
         threading.Thread(target=thread_func)
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.yahoo.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.yahoo.com'})
         shortened, hash_value1 = get_shortened_url(1, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.google.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.google.com'})
         shortened, hash_value2 = get_shortened_url(2, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.tvb.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.tvb.com'})
         shortened, hash_value3 = get_shortened_url(3, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
@@ -113,28 +113,28 @@ class MyTestCase(unittest.TestCase):
 
         threading.Thread(target=thread_func)
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.music1.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.music1.com'})
         shortened, hash_value1 = get_shortened_url(1, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.music2.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.music2.com'})
         shortened, hash_value2 = get_shortened_url(2, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.music3.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.music3.com'})
         shortened, hash_value3 = get_shortened_url(3, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.music4.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.music4.com'})
         shortened, hash_value4 = get_shortened_url(4, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.music5.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.music5.com'})
         shortened, hash_value5= get_shortened_url(5, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
         # this exceed the limit
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.music6.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.music6.com'})
         shortened, hash_value6 = get_shortened_url(6, 'http://mydomain.com/')
         self.assertEqual(rv.data, b'{"Error":"Counter All used up"}\n')
 
@@ -183,7 +183,7 @@ class MyTestCase(unittest.TestCase):
         for x in range(1, 50):
             url = 'http://www.music{0}.com'.format(x)
             rv = app.test_client().post('/shorten', headers={'Accept': '*/*'},
-                                        json=[{'LongURL': url}])
+                                        json={'LongURL': url})
             shortened, hash_value = get_shortened_url(x, 'http://mydomain.com/')
             self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
@@ -197,7 +197,7 @@ class MyTestCase(unittest.TestCase):
         setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=40, count_end=45)
 
         rv = app.test_client().post('/shorten', headers={'Accept': '*/*'},
-                                    json=[{'LongURL': 'http://www.shouldbebad.com'}])
+                                    json={'LongURL': 'http://www.shouldbebad.com'})
         self.assertEqual(rv.data, b'{"Error":"Counter All used up"}\n')
 
     def test_range_out_of_clash(self):
@@ -213,7 +213,7 @@ class MyTestCase(unittest.TestCase):
         for x in range(1, 50):
             url = 'http://www.music{0}.com'.format(x)
             rv = app.test_client().post('/shorten', headers={'Accept': '*/*'},
-                                        json=[{'LongURL': url}])
+                                        json={'LongURL': url})
             shortened, hash_value = get_shortened_url(x, 'http://mydomain.com/')
             self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
@@ -226,7 +226,7 @@ class MyTestCase(unittest.TestCase):
         init_app()
         setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=55, count_end=-1)
 
-        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': 'http://www.shouldbegood.com'}])
+        rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.shouldbegood.com'})
         shortened, hash_value = get_shortened_url(55, 'http://mydomain.com/')
         self.assertEqual(rv.data, shortened.encode('UTF-8'))
 
@@ -243,7 +243,7 @@ class MyTestCase(unittest.TestCase):
         def thread_client(start,end):
             for x in range(start,end+1):
                 url = 'http://www.music{0}.com'.format(x)
-                app.test_client().post('/shorten', headers={'Accept': '*/*'}, json=[{'LongURL': url}])
+                app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': url})
 
         c1 = threading.Thread(target=thread_client, args=(1,10))
         c2 = threading.Thread(target=thread_client, args=(11,20))
@@ -296,7 +296,7 @@ class MyTestCase(unittest.TestCase):
         for x in range(1, 100):
             url = 'http://www.music{0}.com'.format(x)
             rv = app.test_client().post('/shorten', headers={'Accept': '*/*'},
-                                        json=[{'LongURL': url}])
+                                        json={'LongURL': url})
             shortened, hash_value = get_shortened_url(x, 'http://mydomain.com/')
             self.assertEqual(rv.data, shortened.encode('UTF-8'))
 

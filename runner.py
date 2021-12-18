@@ -44,7 +44,7 @@ def shorten():
     if request.method == 'POST':
         # get the URL to be shorten
         app.logger.debug(request.json)
-        long_url = request.json[0]['LongURL']
+        long_url = request.json['LongURL']
         mapping_store = mappingStore.MappingStore(g_db_path)
         if mapping_store.is_long_url_exist(long_url):
             # if it exists just return directly from the g_mapping_store
