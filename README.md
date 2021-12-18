@@ -75,22 +75,18 @@ POST /shorten
 > Body Parameter
 
 ```
-[
-    {
+{
         "LongURL": "http://www.google.com/the/url/need/to/be/shortened"
-    }
-]
+}
 ```
 
 > Example Response
 
 > 200 Response
 ```
-[
-    {
+{
         "ShortenedURL":"http://myHost:5050/578yu21"
-    }
-]
+}
 ```
 
 The POST HTTP call can be triggered using some HTTP Rest API client like Postman or using curl command, below illustrate the behavior using curl:
