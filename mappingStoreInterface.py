@@ -4,8 +4,8 @@ import abc
 class MappingStoreInterface(metaclass=abc.ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass):
-        return (hasattr(subclass, 'init_store') and
-                callable(subclass.init_store) and
+        return (hasattr(subclass, 'init_or_open_store') and
+                callable(subclass.init_or_open_store) and
                 hasattr(subclass, 'clean_store') and
                 callable(subclass.clean_store) and
                 hasattr(subclass, 'insert_hashed_url') and
@@ -21,7 +21,7 @@ class MappingStoreInterface(metaclass=abc.ABCMeta):
                 NotImplemented)
 
     @abc.abstractmethod
-    def init_store(self, store_path):
+    def init_or_open_store(self, store_path):
         raise NotImplementedError
 
     @abc.abstractmethod

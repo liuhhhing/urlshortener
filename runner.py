@@ -21,7 +21,7 @@ def init_app():
 
 def clean_db():
     mapping_store = MappingStoreInterface.register(mappingStoreDB.MappingStoreDB)()
-    mapping_store.init_store(g_db_path)
+    mapping_store.init_or_open_store(g_db_path)
     mapping_store.clean_store()
 
 
@@ -34,7 +34,7 @@ def set_shortener_range(start=1, end=-1):
 @app.route('/<hashed_id>')
 def redirect_to_link(hashed_id):
     mapping_store = MappingStoreInterface.register(mappingStoreDB.MappingStoreDB)()
-    mapping_store.init_store(g_db_path)
+    mapping_store.init_or_open_store(g_db_path)
     if not mapping_store.is_hashed_url_exist(hashed_id):
         return jsonify({'Error': 'No record for this shortened URL ' + hashed_id}), 400
 
@@ -51,7 +51,7 @@ def shorten():
         app.logger.debug(request.json)
         long_url = request.json['LongURL']
         mapping_store = MappingStoreInterface.register(mappingStoreDB.MappingStoreDB)()
-        mapping_store.init_store(g_db_path)
+        mapping_store.init_or_open_store(g_db_path)
         if mapping_store.is_long_url_exist(long_url):
             # if it exists just return directly from the g_mapping_store
             hashed_url = mapping_store.get_hash_from_long_url(long_url)
@@ -101,7 +101,7 @@ def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, response_url_prefix=None
     g_db_path = mapping_store_file
 
     mapping_store = MappingStoreInterface.register(mappingStoreDB.MappingStoreDB)()
-    mapping_store.init_store(g_db_path)
+    mapping_store.init_or_open_store(g_db_path)
 
 
 

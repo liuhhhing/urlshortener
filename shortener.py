@@ -28,7 +28,7 @@ class Shortener:
             hash_operation = hashlib.sha256((self.secret_key + str(self.counter.value)).encode()).hexdigest()[:self.first_n_char]
             logging.debug('{{Counter, Hash}} = {{{0},{1}}}'.format(self.counter.value, hash_operation))
             mapping_store = MappingStoreInterface.register(mappingStoreDB.MappingStoreDB)()
-            mapping_store.init_store(self.db_path)
+            mapping_store.init_or_open_store(self.db_path)
             while mapping_store.is_hashed_url_exist(hash_operation):  # loop until no cash
                 # it should happen very rare
                 logging.debug('{{Counter, Hash}} = {{{0},{1}}} clash, try again'.format(self.counter.value, hash_operation))
@@ -63,6 +63,6 @@ class Shortener:
             return '', False
 
         mapping_store = MappingStoreInterface.register(mappingStoreDB.MappingStoreDB)()
-        mapping_store.init_store(self.db_path)
+        mapping_store.init_or_open_store(self.db_path)
         mapping_store.insert_hashed_url(counter_id, longUrl, hash_value)
         return hash_value, True

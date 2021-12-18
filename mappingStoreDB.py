@@ -19,7 +19,7 @@ class MappingStoreDB(MappingStoreInterface):
             self.db_connection.close()
             self.db_connection = None
 
-    def init_store(self, store_path):
+    def init_or_open_store(self, store_path):
         self.store_path = store_path
         db, cursor = self.get_db()
         try:
