@@ -18,7 +18,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_first_time_shorten_url(self):
         init_app()
-        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050)
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, mapping_store_file='mappingTest.sqlite')
         clean_db()
 
         def thread_func():
@@ -32,7 +32,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_redirect_from_shorten_url(self):
         init_app()
-        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050)
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, mapping_store_file='mappingTest.sqlite')
         clean_db()
 
         def thread_func():
@@ -49,7 +49,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_shorten_same_url(self):
         init_app()
-        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050)
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, mapping_store_file='mappingTest.sqlite')
         clean_db()
 
         def thread_func():
@@ -74,7 +74,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_shorten_diff_url(self):
         init_app()
-        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050)
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, mapping_store_file='mappingTest.sqlite')
         clean_db()
 
         def thread_func():
@@ -105,7 +105,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_counter_range(self):
         init_app()
-        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=1, count_end=5)
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=1, count_end=5, mapping_store_file='mappingTest.sqlite')
         clean_db()
 
         def thread_func():
@@ -159,7 +159,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_non_exist_hash(self):
         init_app()
-        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=1, count_end=5)
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=1, count_end=5, mapping_store_file='mappingTest.sqlite')
         clean_db()
 
         def thread_func():
@@ -172,7 +172,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_range_clash(self):
         init_app()
-        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=1, count_end=-1)
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=1, count_end=-1, mapping_store_file='mappingTest.sqlite')
         clean_db()
 
         def thread_func():
@@ -194,7 +194,7 @@ class MyTestCase(unittest.TestCase):
             self.assertEqual(rv.location, long_url)
 
         init_app()
-        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=40, count_end=45)
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=40, count_end=45, mapping_store_file='mappingTest.sqlite')
 
         rv = app.test_client().post('/shorten', headers={'Accept': '*/*'},
                                     json={'LongURL': 'http://www.shouldbebad.com'})
@@ -202,7 +202,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_range_out_of_clash(self):
         init_app()
-        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=1, count_end=-1)
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=1, count_end=-1, mapping_store_file='mappingTest.sqlite')
         clean_db()
 
         def thread_func():
@@ -211,7 +211,7 @@ class MyTestCase(unittest.TestCase):
         threading.Thread(target=thread_func)
 
         for x in range(1, 50):
-            url = 'http://www.music{0}.com'.format(x)
+            url = 'http://www.out{0}.com'.format(x)
             rv = app.test_client().post('/shorten', headers={'Accept': '*/*'},
                                         json={'LongURL': url})
             shortened, hash_value = get_shortened_url(x, 'http://mydomain.com/')
@@ -220,11 +220,11 @@ class MyTestCase(unittest.TestCase):
         for x in range(1, 50):
             shortened, hash_value = get_shortened_url(x, 'http://mydomain.com/')
             rv = app.test_client().get('/' + hash_value)
-            long_url = 'http://www.music{0}.com'.format(x)
+            long_url = 'http://www.out{0}.com'.format(x)
             self.assertEqual(rv.location, long_url)
 
         init_app()
-        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=55, count_end=-1)
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=55, count_end=-1, mapping_store_file='mappingTest.sqlite')
 
         rv = app.test_client().post('/shorten', headers={'Accept': '*/*'}, json={'LongURL': 'http://www.shouldbegood.com'})
         shortened, hash_value = get_shortened_url(55, 'http://mydomain.com/')
@@ -232,7 +232,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_multiple(self):
         init_app()
-        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, mapping_store_file='test.sqlite', count_start=1, count_end=20)
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, mapping_store_file='mappingTest.sqlite', count_start=1, count_end=20)
         clean_db()
 
         def thread_func():
@@ -285,7 +285,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_stress(self):
         init_app()
-        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=1, count_end=-1)
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050, count_start=1, count_end=-1, mapping_store_file='mappingTest.sqlite')
         clean_db()
 
         def thread_func():
