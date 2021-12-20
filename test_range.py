@@ -23,7 +23,7 @@ def init_db():
         print(e)
 
     try:
-        for i in range(1, 200):
+        for i in range(0, 200):
             cursor.execute('''insert into ranges (id, start, end, occupied) values ({0}, {1}, {2}, 0)'''.format(
                 i, (i-1)*100 +1, i*100
             ))
@@ -51,7 +51,7 @@ def init_db_with_all_occupied():
         print(e)
 
     try:
-        for i in range(1, 200):
+        for i in range(0, 200):
             cursor.execute('''insert into ranges (id, start, end, occupied) values ({0}, {1}, {2}, 1)'''.format(
                 i, (i-1)*100 +1, i*100
             ))
@@ -104,17 +104,17 @@ class MyTestCase(unittest.TestCase):
         range2.db_file = 'test_range.db'
 
         def thread_func_1():
-            for i in range(1, 5):
+            for i in range(1, 50):
                 range1.get_lock(100000)
                 result = range1.get_range()
-                print("From 1 {0}, {1}, {2}".format(result[0], result[1], result[2]))
+               # print("From 1 {0}, {1}, {2}".format(result[0], result[1], result[2]))
                 range1.release_lock()
 
         def thread_func_2():
-            for i in range(1, 5):
+            for i in range(1, 50):
                 range2.get_lock(100000)
                 result = range2.get_range()
-                print("From 2 {0}, {1}, {2}".format(result[0], result[1], result[2]))
+               # print("From 2 {0}, {1}, {2}".format(result[0], result[1], result[2]))
                 range2.release_lock()
 
         c1 = threading.Thread(target=thread_func_1)
@@ -125,6 +125,12 @@ class MyTestCase(unittest.TestCase):
 
         c1.join()
         c2.join()
+
+        conn = sqlite3.connect('test_range.db', detect_types=sqlite3.PARSE_DECLTYPES)
+        cursor = conn.cursor()
+        cursor.execute("select count(*) from ranges where id > 0 and occupied = 1")
+        result = cursor.fetchone()
+        self.assertEqual(result[0], 98)
 
 
 if __name__ == '__main__':
