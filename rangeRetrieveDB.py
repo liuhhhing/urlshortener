@@ -11,20 +11,27 @@ class RangeRetrieveDB(RangeRetrieveInterface):
 
     def get_lock(self, timeout):
         self.timeout = timeout
+        self.conn = sqlite3.connect(str(self.db_file), detect_types=sqlite3.PARSE_DECLTYPES, timeout=self.timeout)
+        try:
+            with self.conn:
+                self.conn.execute("update ranges set occupied = 1 where id = 0")
+                # this is to lock the db
+
+        except sqlite3.Error as e:
+            logging.debug(e)
+            return False
+
         return True
 
     def get_range(self):
         start = 0
         end = 0
-        self.conn = sqlite3.connect(str(self.db_file), detect_types=sqlite3.PARSE_DECLTYPES, timeout=self.timeout)
 
         try:
             with self.conn:
                 cursor = self.conn.cursor()
-                # this is to lock the db
-                cursor.execute(
-                    "update ranges set occupied = 1 where id = 0"
-                )
+
+                cursor.execute("update ranges set occupied = 1 where id = 0") # this is to lock the db
                 # table with col like
                 # id, start, end, occupied
                 # SELECT id, start, end from ranges where occupied = 0 order by id asc
@@ -40,7 +47,6 @@ class RangeRetrieveDB(RangeRetrieveInterface):
                     cursor.execute(
                         "update ranges set occupied = 1 where id = {0}".format(id)
                     )
-                    self.conn.commit()
                 else:
                     return start, end, False
 
@@ -48,8 +54,15 @@ class RangeRetrieveDB(RangeRetrieveInterface):
             logging.debug(e)
             return start, end, False
 
-        self.conn.close()
         return start, end, True
 
     def release_lock(self):
+        try:
+            self.conn.commit()
+            self.conn.close()
+        except sqlite3.Error as e:
+            logging.debug(e)
+            return False
+
+
         return True

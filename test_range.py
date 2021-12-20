@@ -104,15 +104,15 @@ class MyTestCase(unittest.TestCase):
         range2.db_file = 'test_range.db'
 
         def thread_func_1():
-            for i in range(1, 50):
-                range1.get_lock(100000)
+            for i in range(1, 100):
+                range1.get_lock(100)
                 result = range1.get_range()
                # print("From 1 {0}, {1}, {2}".format(result[0], result[1], result[2]))
                 range1.release_lock()
 
         def thread_func_2():
-            for i in range(1, 50):
-                range2.get_lock(100000)
+            for i in range(1, 100):
+                range2.get_lock(100)
                 result = range2.get_range()
                # print("From 2 {0}, {1}, {2}".format(result[0], result[1], result[2]))
                 range2.release_lock()
@@ -130,7 +130,7 @@ class MyTestCase(unittest.TestCase):
         cursor = conn.cursor()
         cursor.execute("select count(*) from ranges where id > 0 and occupied = 1")
         result = cursor.fetchone()
-        self.assertEqual(result[0], 98)
+        self.assertEqual(result[0], 99+99)
 
 
 if __name__ == '__main__':
