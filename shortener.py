@@ -9,11 +9,12 @@ class Shortener:
         self.first_n_char = 7
         self.counter = Value('i', 1)
         self.counter_upper_limit = -1  # means no limit
-        self.token_url = ''
         self.response_url_prefix = ''
         self.secret_key = '+goodwishtoHongKong'
         self.db_path = None
         self.mapping_store = None
+        self.range_retriever = None
+        self.range_retriever_timeout_in_sec = 10 # in sec
         # self.file_path = ''
         # self.mapping = {} # this is a dictionary in memory
 
@@ -25,7 +26,12 @@ class Shortener:
         self.counter_upper_limit = end
 
     def still_can_hash(self):
-        return self.counter_upper_limit == -1 or self.counter.value <= self.counter_upper_limit
+        result = self.counter_upper_limit == -1 or self.counter.value <= self.counter_upper_limit
+        if not result: # meaning all id used up
+            # then try to refresh counter, if it still fail it will return False
+            # otherwise, it will update the counter value, and the new counter_upper_limit
+            return self.refresh_counter()
+        return result
 
     def generate_hash(self):
         with self.counter.get_lock():
@@ -52,14 +58,20 @@ class Shortener:
             return hash_operation[:self.first_n_char], return_counter
 
     def refresh_counter(self):
-        if len(self.token_url) > 0:
-            # TODO: meaning it is defined, issue a request to the token service and get a new set of counter
-            # now just make it a fake one
-            self.counter = Value('i', 1)
-            # TODO: if the service is defined, we need to see if it can successfully return the new range, not always return true
-            return True
-        # meaning it is not defined, just return
-        return False
+        if self.range_retriever is not None:
+            if self.range_retriever.get_lock(self.range_retriever_timeout_in_sec):
+                result = self.range_retriever.get_range()
+                if result[2] == True:
+                    self.counter = Value('i', result[0])
+                    self.counter_upper_limit = result[1]
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        else:
+            # meaning it is not defined, just return
+            return False
 
     def generate_shortened_url(self, longUrl):
         hash_value, counter_id = self.generate_hash()
