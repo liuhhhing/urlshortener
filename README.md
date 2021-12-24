@@ -1,4 +1,4 @@
-# python urlshortener service
+# python urlshortener service using flask
 ## Description
 This is a REST API service written in python and provides the URL shortening function. For example, when the below long URL is given:
 
