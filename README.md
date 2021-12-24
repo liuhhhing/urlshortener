@@ -168,9 +168,9 @@ For ensuring the non-clash of range between each services, a centralized place s
 2. Range retrieve - this will return an unique range when the one-and-only-one lock is acquired
 3. Lock Release - this make sure the other service waiting for the lock can acquire the lock to retreive range
 
-This is generalized as interface (rangeRetrieveInterface.py) and implemented in DB way using rangeRetrieveDB.py. When the range DB file is specified (`--rangeDB`) the custom counter range (`--countRange`) will be ignored.
+This is generalized as interface (`rangeRetrieveInterface.py`) and implemented in DB way using `rangeRetrieveDB.py`. When the range DB file is specified (`--rangeDB`) the custom counter range (`--countRange`) will be ignored.
 
-Finally, for security reason we added a static text, which is stored in the shortener.py, as the prefix to the id before hashing.
+For security reason we added a static text, which is stored in the shortener.py, as the prefix to the id before hashing.
 
 For example, instead of hashing the "1", we hash the text "secretkey_1". This is important because URL shortener is not just to shorten the long URL, but also to some extent hide the Long URL information. Let's say when you try to share a photo from a private cloud to only some friends, you don't want hacker to retreive the Long URL by issuing a `HTTP GET /{hash_value}` with the hash_value from hashed "1", "2", "3" ... etc easily. Adding a secret prefix can help raise the security to certain extent.
 
