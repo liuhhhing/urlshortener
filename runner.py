@@ -16,6 +16,7 @@ app = Flask(__name__)
 g_shortener = None
 g_mapping_store = None
 g_db_path = None
+g_range_retriever = None
 
 def init_app():
     global g_shortener
@@ -29,8 +30,15 @@ def clean_db():
 
 def set_shortener_range(start=1, end=-1):
     global g_shortener
-    g_shortener.counter = start
-    g_shortener.counter_upper_limit = end
+    g_shortener.set_counter_range(start, end)
+
+def set_shortener_range_retriever_as_db(db_path, lock_timeout):
+    global g_shortener
+    logging.debug("db_path is {0}".format(db_path))
+
+    g_shortener.set_range_retriever(db_path, lock_timeout)
+
+    return g_shortener.refresh_counter()
 
 
 @app.route('/<hashed_id>')
@@ -68,7 +76,7 @@ def shorten():
         return jsonify({response_key: g_shortener.response_url_prefix + short_url}), 200
 
 
-def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, response_url_prefix=None, token_url=None, count_start=1, count_end=-1,
+def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, response_url_prefix=None, range_db=None, range_db_timeout=5, count_start=1, count_end=-1,
                     storage_type="sqlite",
                     mapping_store_file=None, logger_file_path=None):
     # if logger_file_path exist it will log to file, otherwise it will log to stdout and stderr
@@ -91,10 +99,13 @@ def setup_shortener(ip='0.0.0.0', port=5050, first_N=7, response_url_prefix=None
             g_shortener.response_url_prefix = "http://" + socket.gethostname() + "/"
 
     g_shortener.first_n_char = first_N
-    if token_url is not None:
-        g_shortener.token_url = token_url
 
-    g_shortener.set_counter_range(count_start, count_end)
+    if range_db is None:
+        set_shortener_range(count_start, count_end)
+    else:
+        if not set_shortener_range_retriever_as_db(range_db, range_db_timeout):
+            raise Exception("Fail to refresh counter from db")
+
     g_shortener.db_path = mapping_store_file
 
     # initialize the flask
@@ -125,10 +136,13 @@ if __name__ == "__main__":
                              'when it is not defined it will be defaulted to system hostname and port like http://www.myHost.com:5050/')
     parser.add_argument('--firstN', dest='first_N', type=int, required=False, default=7,
                         help='The first n characters from the hashed counter to form the shortened URL')
-    parser.add_argument('--tokenUrl', dest='token_url', type=str, required=False,
-                        help='The URL to get the range of available counter when it is running in distributed manner (To-Be-Implemented)')
+    parser.add_argument('--rangeDB', dest='range_db', type=str, required=False,
+                        help='The DB that contains the range to retrieve')
+    parser.add_argument('--rangeDBTimeout', dest='range_db_timeout', type=int, required=False, default=5,
+                        help='The timeout to get lock or connect to the DB for a new range')
     parser.add_argument('--countRange', dest='count_range', type=str, required=False,
-                        help='Hyphen separated range, for example 1-100, if it is not defined it will be defaulted from 1 to sizeof(int)')
+                        help='Hyphen separated range, for example 1-100, if it is not defined it will be defaulted from 1 to sizeof(int)'
+                             'When rangeDB is defined the process will ignore this')
     parser.add_argument('--storageType', dest='storage_type', type=str, required=False, default='sqlite',
                         help='The storage type, now it support "sqlite","file". If it is not specified it will be defaulted to sqlite')
     parser.add_argument('--mappingStoreFile', dest='mapping_store_file', type=str, default='mapping.sqlite',
@@ -147,7 +161,8 @@ if __name__ == "__main__":
                     port=args.port,
                     first_N=args.first_N,
                     response_url_prefix=args.response_url_prefix,
-                    token_url=args.token_url,
+                    range_db=args.range_db,
+                    range_db_timeout=args.range_db_timeout,
                     count_start=1 if args.count_range is None else int(args.count_range.split("-")[0]),
                     count_end=-1 if args.count_range is None else int(args.count_range.split("-")[1]),
                     storage_type=args.storage_type,

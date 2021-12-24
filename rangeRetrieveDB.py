@@ -12,6 +12,9 @@ class RangeRetrieveDB(RangeRetrieveInterface):
         self.db_file = None
         self.conn = None
 
+    def set_db_file(self, db_file):
+        self.db_file = db_file
+
     def get_lock(self, timeout):
         logging.debug("Start to get lock")
         success = True
@@ -21,6 +24,7 @@ class RangeRetrieveDB(RangeRetrieveInterface):
         count = self.timeout
         while True:
             try:
+                logging.debug("connect to {0}".format(str(self.db_file)))
                 self.conn = sqlite3.connect(str(self.db_file), detect_types=sqlite3.PARSE_DECLTYPES, timeout=10)
                 cursor = self.conn.cursor()
                 cursor.execute("update ranges set occupied = 1 where id = 0 and occupied = 0")

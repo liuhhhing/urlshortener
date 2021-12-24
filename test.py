@@ -5,7 +5,12 @@ from runner import app
 from runner import init_app
 from runner import clean_db
 import hashlib
+import sqlite3
+import logging
 
+
+logging.basicConfig(format='%(thread)d %(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S',
+                            level=logging.DEBUG)
 
 def get_shortened_url(to_be_hash, domain):
     hash_value = hashlib.sha256(('+goodwishtoHongKong' + str(to_be_hash)).encode()).hexdigest()[:7]
@@ -13,6 +18,61 @@ def get_shortened_url(to_be_hash, domain):
     shortened = '{"ShortenedURL":"' + shortened + '"}\n'
     return shortened, hash_value
 
+def get_all_occupied_range(db_path):
+    results = [()]
+    try:
+        db_connection = sqlite3.connect(str(db_path), detect_types=sqlite3.PARSE_DECLTYPES)
+        cursor = db_connection.cursor()
+        result = cursor.execute("SELECT id, start, end, occupied from ranges where id > 0 and occupied = 1")
+
+        for row in result.fetchall():
+            logging.debug(row)
+            results.append(row)
+
+    except sqlite3.Error as e:
+        logging.debug(e)
+
+    db_connection.close()
+    return results
+
+def init_range_db(db_path):
+    gap = 3
+    db_connection = sqlite3.connect(str(db_path), detect_types=sqlite3.PARSE_DECLTYPES)
+    cursor = db_connection.cursor()
+    try:
+        cursor.execute('''drop table ranges''')
+    except sqlite3.Error as e:
+        logging.debug(e)
+
+    logging.debug("drop table ranges")
+    db_connection.commit()
+
+    try:
+        cursor.execute('''CREATE TABLE IF NOT EXISTS ranges (
+            [id] INTEGER NOT NULL unique,
+            [start] INTEGER NOT NULL unique,
+            [end] INTEGER NOT NULL unique,
+            [occupied] INTEGER NOT NULL
+            )''')
+    except sqlite3.Error as e:
+        logging.debug(e)
+
+    db_connection.commit()
+
+    logging.debug("create table ranges")
+
+    try:
+        for i in range(0, 200):
+            cursor.execute('''insert into ranges (id, start, end, occupied) values ({0}, {1}, {2}, 0)'''.format(
+                i, (i - 1) * gap + 1, i * gap
+            ))
+    except sqlite3.Error as e:
+        logging.debug(e)
+
+    logging.debug("insert table ranges")
+
+    db_connection.commit()
+    db_connection.close()
 
 class MyTestCase(unittest.TestCase):
 
@@ -281,7 +341,42 @@ class MyTestCase(unittest.TestCase):
         long_url_list.sort()
         self.assertEqual(long_url_list, expected_long_url_list)
 
+    def test_range_retriever(self):
+        init_range_db('range_db.sqlite')
+        init_app()
+        setup_shortener(response_url_prefix='http://mydomain.com/', port=5050,
+                        range_db='range_db.sqlite',
+                        mapping_store_file='mappingTest.sqlite')
+        clean_db()
 
+
+        def thread_func():
+            app.run()
+
+        threading.Thread(target=thread_func)
+
+        for x in range(1, 11):
+            url = 'http://www.music{0}.com'.format(x)
+            rv = app.test_client().post('/shorten', headers={'Accept': '*/*'},
+                                        json={'LongURL': url})
+            shortened, hash_value = get_shortened_url(x, 'http://mydomain.com/')
+            self.assertEqual(rv.data, shortened.encode('UTF-8'))
+
+        for x in range(1, 11):
+            shortened, hash_value = get_shortened_url(x, 'http://mydomain.com/')
+            rv = app.test_client().get('/' + hash_value)
+            long_url = 'http://www.music{0}.com'.format(x)
+            self.assertEqual(rv.location, long_url)
+
+        # check from the retriever all occupied range information
+        expected = [()]
+        expected.append((1, 1, 3, 1))
+        expected.append((2, 4, 6, 1))
+        expected.append((3, 7, 9, 1))
+        expected.append((4, 10, 12, 1))
+
+        result = get_all_occupied_range('range_db.sqlite')
+        self.assertEqual(expected, result)
 
     def test_stress(self):
         init_app()

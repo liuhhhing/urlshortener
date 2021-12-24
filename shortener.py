@@ -3,6 +3,8 @@ import hashlib
 import mappingStoreDB
 from multiprocessing import Value
 from mappingStoreInterface import MappingStoreInterface
+from rangeRetrieveInterface import RangeRetrieveInterface
+import rangeRetrieveDB
 
 class Shortener:
     def __init__(self):
@@ -24,6 +26,11 @@ class Shortener:
     def set_counter_range(self, start, end):
         self.counter = Value('i', start)
         self.counter_upper_limit = end
+
+    def set_range_retriever(self, db_file, lock_timeout):
+        self.range_retriever = RangeRetrieveInterface.register(rangeRetrieveDB.RangeRetrieveDB)()
+        self.range_retriever.set_db_file(db_file)
+        self.range_retriever_timeout_in_sec = int(lock_timeout)
 
     def still_can_hash(self):
         result = self.counter_upper_limit == -1 or self.counter.value <= self.counter_upper_limit
@@ -58,14 +65,17 @@ class Shortener:
             return hash_operation[:self.first_n_char], return_counter
 
     def refresh_counter(self):
+        logging.debug("Refresh Counter")
         if self.range_retriever is not None:
             if self.range_retriever.get_lock(self.range_retriever_timeout_in_sec):
                 result = self.range_retriever.get_range()
                 if result[2] == True:
                     self.counter = Value('i', result[0])
                     self.counter_upper_limit = result[1]
+                    self.range_retriever.release_lock()
                     return True
                 else:
+                    self.range_retriever.release_lock()
                     return False
             else:
                 return False
