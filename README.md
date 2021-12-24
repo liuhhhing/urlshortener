@@ -49,11 +49,15 @@ optional arguments:
                         and port like http://www.myHost.com:5050/
   --firstN FIRST_N      The first n characters from the hashed counter to form
                         the shortened URL
-  --tokenUrl TOKEN_URL  The URL to get the range of available counter when it
-                        is running in distributed manner (To-Be-Implemented)
+  --rangeDB RANGE_DB    The DB that contains the range to retrieve
+  --rangeDBTimeout RANGE_DB_TIMEOUT
+                        The timeout to get lock or connect to the DB for a new
+                        range
   --countRange COUNT_RANGE
                         Hyphen separated range, for example 1-100, if it is
-                        not defined it will be defaulted from 1 to sizeof(int)
+                        not defined it will be defaulted from 1 to
+                        sizeof(int)When rangeDB is defined the process will
+                        ignore this
   --storageType STORAGE_TYPE
                         The storage type, now it support "sqlite","file". If
                         it is not specified it will be defaulted to sqlite
@@ -66,7 +70,6 @@ optional arguments:
                         will be outputted to consoleNotice the log file name
                         will be appended with the "_YYYYMMDDhhmmss" so on
                         every run the previous log will not be overwritten
-
 ```
 
 Their usage will be described later.
@@ -146,20 +149,28 @@ Basically the following modules implemented the logic:
 runner.py
 mappingStoreInterface.py
 mappingStoreDB.py
+rangeRetrieveInterface.py
+rangeRetrieveDB.py
 shortener.py
 ```
 
 The idea of the program is to assign an unique id (specified in argument `--countRange`) to each incoming `POST /shorten` request, the unique id will be hashed using SHA256 and the first 7 characters (specified in argument `--firstN`) will be used as the shortened URL key.
 
-The unique id is a range of integer that the program assigned to, it can be 1 to 10, 50 to 200 or 1 to sizeof(int), ... etc.
+The unique id is a range of integer that the program get assigned to, it can be 1 to 10, 50 to 200 or 1 to sizeof(int), ... etc.
 
-The reason of hashing the unqiue id instead of hashing the longURL is that, this can avoid the hash clash when the first 7 characters can be the same over some long URLs. Even though the hash of certain unique ids can still be clashed (consider the hash of integer 'n' can clash the hash of integer 'm'), since it is controlled by the program it can be avoided by finding the next unique id from the range until no clash happens.
+The reason of hashing the unqiue id instead of hashing the longURL is that, this can avoid the hash clash when the first 7 characters can be the same over some long URLs. Even though the hash of certain unique ids can still be clashed (consider the hash of integer 'n' can clash the hash of integer 'm'), since it is controlled by the program it can be avoided by finding the next unique id from the range until no clash happens, although it can happen rarely.
 
 Another reason for using a range of id is that when we want to run the program as microservice, and when multiple of the instance is run, they can be assigned with different range of id so they won't be clashed.
 
-However, this needs another service to provide the range of id that is being "free-to-use" or "being-used" and get retrieved by the program (this can be specified by the argument `--tokenUrl`. ***Notice it is in to-be-implemented stage and not supported***.
+For ensuring the non-clash of range between each services, a centralized place should be introduced to manage the assignment of range, let us name it as rangeRetriever. This rangeRetriever should provide the 3 basic interfaces:
 
-For security reason we added a static text, which is stored in the shortener.py, as the prefix to the id before hashing.
+1. Lock acquire - this make sure other service won't get the clashed range by pending here
+2. Range retrieve - this will return an unique range when the one-and-only-one lock is acquired
+3. Lock Release - this make sure the other service waiting for the lock can acquire the lock to retreive range
+
+This is generalized as interface (rangeRetrieveInterface.py) and implemented in DB way using rangeRetrieveDB.py. When the range DB file is specified (`--rangeDB`) the custom counter range (`--countRange`) will be ignored.
+
+Finally, for security reason we added a static text, which is stored in the shortener.py, as the prefix to the id before hashing.
 
 For example, instead of hashing the "1", we hash the text "secretkey_1". This is important because URL shortener is not just to shorten the long URL, but also to some extent hide the Long URL information. Let's say when you try to share a photo from a private cloud to only some friends, you don't want hacker to retreive the Long URL by issuing a `HTTP GET /{hash_value}` with the hash_value from hashed "1", "2", "3" ... etc easily. Adding a secret prefix can help raise the security to certain extent.
 
@@ -192,7 +203,7 @@ It will use the shortener.py and mappingStoreInterface.py to help doing the hash
 1. Check from the incoming `POST /shorten` request, the LongURL exists or not, using the **mappingStoreInterface.py**
 2. If yes it will return the stored shortURL directly
 3. If no, it will do the hashing, increment the counter, and store the new mapping, using **shortener.py**
-4. If all counter used up and no clean hash can be found, it will return Error response of 400
+4. If all counter used up and no clean hash can be found, it will return Error response of 400 (if no `--rangeDB` is defined), *OR* refresh the counter using **rangeRetrieveInterface.py** (if `--rangeDB` is defined)
 5. If a clean hash can be located, it will return a success response of 200
 
 > For Get /{hash_id}
@@ -201,13 +212,12 @@ It will use the shortener.py and mappingStoreInterface.py to help doing the hash
 3. If no, it will return Error response of 400
 
 ### shortener.py
-The shortener basically maintain a counter (specified by the argument `--countRange`) and do the hashing, to be brief, it will do:
+The shortener basically maintain a counter (specified by the argument `--countRange` and `--rangeDB`) and do the hashing, to be brief, it will do:
 
 1. Assign a unique id (over the given range) to the incoming LongURL request
 2. Hash the unique id and check if the hashed id found duplicate, using **mappingStoreInterface.py**
 3. If duplicate is found, just locate another unique id until the hash won't clash
-4. If all the unique id are used up and still clash, return error
-5. If the tokenUrl (specified by the argument `--tokenUrl`) is implemented, the step 4 above should go to retrieve another 'free-to-use' id range from the range assigner service rather than return error, unless the range assigner service is also failed.
+4. If all the unique id are used up and still clash, return error (if no `--rangeDB` is defined) *OR* it will refresh the counter from the range retriever (if `--rangeDB` is defined)
 
 > Hashing
 
@@ -228,6 +238,28 @@ The `mappingStoreInterface` basically provide the interface to save and load the
 > Safe for single DB in multiple run
 
 In multiple instance case, since all instance should be running with different counter range (presume), it shouldn't cause any conflict in inserting record to the storage. let say if it is DB implementation then each insert should be safe. If it is File implementation it should make sure the "locking" of the file when doing "insert".
+
+### rangeRetrieveInterface.py
+The `rangeRetrieveInterface` basically provide the interface to refresh a unique counter range when it is being used up. As mentioned above it should provide the following functions:
+
+1. Lock Acquire
+2. Range Retrieve
+3. Lock Release
+
+The `rangeRetrieveDB.py` provided the implemenation of it using DB way. Basically if this implementation need to be supported, a database with table named `ranges` should be defined as follow:
+
+```
+CREATE TABLE IF NOT EXISTS ranges (
+            [id] INTEGER NOT NULL unique,
+            [start] INTEGER NOT NULL unique,
+            [end] INTEGER NOT NULL unique,
+            [occupied] INTEGER NOT NULL
+            )
+```
+
+A special row with id = 0 is used for locking and its 'occupied' should be 0 initially so the table will be in unlock stage. Then the other row with id > 0 will all with the range specified by "start" and "end" (therefore they need to be unque and end > start).
+
+The occupied column should be marked as "1" when it is get assigned to the retriever. The maintainence of this table should be support/admin work.
 
 ## Unit Test
 The unit test is `test.py` and using python unittest. To run the test, issue the following command:
@@ -255,9 +287,7 @@ Different test scenario are covered and they should be self-explained from the t
 ## Future Work
 There is a list of TODO for this work:
 
-1. Support retreiving the range of free-to-use id from a service so it can be run in multiple manner
-2. Check if the incoming LongURL request is a valid URL (at least the format is correct), rather than allowing them put a random text
-3. Support HTTPS
-4. Support Authentication optionally
-5. The retreive of ID should be made as "interface" as well, the implementation could be a DB, or another "GET" request from another isolated service.
+1. Check if the incoming LongURL request is a valid URL (at least the format is correct), rather than allowing them put a random text
+2. Support HTTPS
+3. Support Authentication optionally
 
